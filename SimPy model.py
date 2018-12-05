@@ -163,6 +163,19 @@ class Client(object):
         self.set_call_end_time_by_id(self.env, self.id_)
 
 
+# In[ ]:
+
+
+class Operator(object):
+    def __init__(self, env, id_):
+        self.env = env
+        self.id_ = id_
+        self.action = env.process(self.run())
+        
+    def run(self):
+        pass
+
+
 # In[9]:
 
 
@@ -172,6 +185,12 @@ def client_generator(env):
             id_, env.client_mx = add_client_to_matrix(env.client_mx, 3, env.now)
             client = Client(env, id_)
         yield env.timeout(1)
+
+
+# In[ ]:
+
+
+def 
 
 
 # In[10]:
