@@ -1,11 +1,16 @@
 
 # coding: utf-8
 
-# In[1]:
+# In[24]:
 
 
 import simpy as sp
 import numpy as np
+import pandas as pd
+
+import datetime as dt
+
+from tqdm import tqdm_notebook
 
 
 # Simpy documentation - https://simpy.readthedocs.io/en/latest/contents.html 
@@ -29,9 +34,28 @@ cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_tim
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
+# In[4]:
+
+
+def get_client_ds(matrix, columns):
+    client_ds = pd.DataFrame(matrix, columns=columns, dtype=np.int)
+    client_ds['status_code'] = client_ds['status']
+    client_ds['status'] = client_ds['status'].transform(lambda x: map_code_cl_status[x])
+    client_ds['type'] = client_ds['priority'].transform(lambda x: {1:'gold',2:'silver',3:'regular'}[x])
+    client_ds['call_start_time_dt'] = client_ds['call_start_time'].transform(lambda x: dt.timedelta(seconds=x))
+    client_ds['call_start_time_dt'] = client_ds['call_start_time_dt'] + dt.datetime(2018,1,1,7)
+    client_ds['call_end_time_dt'] = client_ds['call_end_time'].transform(lambda x: dt.timedelta(seconds=x))
+    client_ds['call_end_time_dt'] = client_ds['call_end_time_dt'] + dt.datetime(2018,1,1,7)
+    client_ds['max_waiting_time_dt'] = client_ds['max_waiting_time'].transform(lambda x: dt.timedelta(seconds=x))
+    client_ds = client_ds.reindex(columns=['id','priority','type', 'status_code','status',
+                           'call_start_time','call_start_time_dt','call_end_time', 'call_end_time_end',
+                           'max_waiting_time', 'max_waiting_time_dt'])
+    return client_ds
+
+
 # # Testing model
 
-# In[4]:
+# In[5]:
 
 
 class CallCenter(object):
@@ -59,7 +83,7 @@ class CallCenter(object):
         pass
 
 
-# In[5]:
+# In[6]:
 
 
 class Client(object):
@@ -78,7 +102,7 @@ class Client(object):
         yield self.env.process(cc.release_line(req))
 
 
-# In[6]:
+# In[7]:
 
 
 def add_client_to_matrix(matrix, priority, call_start_time):
@@ -92,7 +116,7 @@ def add_client_to_matrix(matrix, priority, call_start_time):
     return id_, np.append(matrix, [data], axis=0)
 
 
-# In[7]:
+# In[8]:
 
 
 def client_generator(env):
@@ -103,7 +127,7 @@ def client_generator(env):
         yield env.timeout(1)
 
 
-# In[8]:
+# In[20]:
 
 
 env = sp.Environment()
@@ -112,14 +136,17 @@ env.call_center = CallCenter(env, 2,0)
 env.client_generator = env.process(client_generator(env))
 
 
-# In[9]:
+# In[21]:
 
 
-env.run(until=50)
+for i in tqdm_notebook(range(60*60)):
+    env.run(until=i+1)
 
 
-# In[10]:
+# In[23]:
 
 
-env.client_mx
+client_ds = get_client_ds(env.client_mx, cl_columns)
+print(client_ds.shape)
+client_ds.head()
 
