@@ -11906,12 +11906,38 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[6]:</div>
 <div class="inner_cell">
     <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Queue</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityStore</span><span class="p">):</span>
+    
+    <span class="n">get</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">BoundClass</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">FilterStoreGet</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot;Request a to get an *item*, for which *filter* returns ``True``, out of</span>
+<span class="sd">    the store.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_do_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">item</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">items</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="n">event</span><span class="o">.</span><span class="n">succeed</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">break</span>
+        <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">CallCenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">n_lines</span><span class="p">,</span> <span class="n">n_vip_lines</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span> <span class="o">=</span> <span class="n">n_lines</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_vip_lines</span> <span class="o">=</span> <span class="n">n_vip_lines</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">lines</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Resource</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">request_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cl_id</span><span class="p">):</span>
         <span class="n">cl_priority</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="n">cl_id</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]]</span>
@@ -11945,7 +11971,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -11987,7 +12013,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">client_generator</span><span class="p">(</span><span class="n">env</span><span class="p">):</span>
@@ -12005,7 +12031,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">init_env</span><span class="p">():</span>
@@ -12023,7 +12049,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">init_env</span><span class="p">()</span>
@@ -12049,13 +12075,13 @@ div#notebook {
 
  
  
-<div id="105fee0d-3022-4396-8b11-5313d660202b"></div>
+<div id="14ee5a5f-ba7c-4c74-943e-fcbc301048f6"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
+var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "b1206fe4b8694ef8922896770f079c20", "version_major": 2, "version_minor": 0}
+{"model_id": "1d28e898952b4b21a5f204c06869202c", "version_major": 2, "version_minor": 0}
 </script>
 </div>
 
@@ -12078,7 +12104,7 @@ var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">client_ds</span> <span class="o">=</span> <span class="n">get_client_ds</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">,</span> <span class="n">cl_columns</span><span class="p">)</span>
@@ -12100,14 +12126,14 @@ var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(28, 11)
+<pre>(25, 11)
 </pre>
 </div>
 </div>
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[11]:</div>
+<div class="prompt output_prompt">Out[12]:</div>
 
 
 
@@ -12193,8 +12219,8 @@ var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
       <td>regular</td>
       <td>3</td>
       <td>no_lines</td>
-      <td>6</td>
-      <td>2018-01-01 07:00:06</td>
+      <td>5</td>
+      <td>2018-01-01 07:00:05</td>
       <td>-1</td>
       <td>NaT</td>
       <td>300</td>
@@ -12207,8 +12233,8 @@ var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
       <td>regular</td>
       <td>3</td>
       <td>no_lines</td>
-      <td>8</td>
-      <td>2018-01-01 07:00:08</td>
+      <td>7</td>
+      <td>2018-01-01 07:00:07</td>
       <td>-1</td>
       <td>NaT</td>
       <td>300</td>
@@ -12227,7 +12253,7 @@ var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -12243,15 +12269,15 @@ var element = $('#105fee0d-3022-4396-8b11-5313d660202b');
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[12]:</div>
+<div class="prompt output_prompt">Out[13]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>no_lines        18
-drop_success     8
-blocked          2
+<pre>no_lines        15
+drop_success     9
+blocked          1
 Name: status, dtype: int64</pre>
 </div>
 

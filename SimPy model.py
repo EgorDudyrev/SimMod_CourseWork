@@ -74,12 +74,31 @@ def get_client_ds(matrix, columns):
 # In[6]:
 
 
+class Queue(sp.PriorityStore):
+    
+    get = sp.core.BoundClass(sp.resources.store.FilterStoreGet)
+    """Request a to get an *item*, for which *filter* returns ``True``, out of
+    the store."""
+
+    def _do_get(self, event):
+        for item in self.items:
+            if event.filter(item):
+                self.items.remove(item)
+                event.succeed(item)
+                break
+        return True
+
+
+# In[7]:
+
+
 class CallCenter(object):
     def __init__(self, env, n_lines, n_vip_lines):
         self.env = env
         self.n_lines = n_lines
         self.n_vip_lines = n_vip_lines
         self.lines = sp.Resource(env, capacity=self.n_lines)
+        self.queue = Queue(env)
 
     def request_line(self, cl_id):
         cl_priority = self.env.client_mx[cl_id, cl_columns_map['priority']]
@@ -106,7 +125,7 @@ class CallCenter(object):
         pass
 
 
-# In[7]:
+# In[8]:
 
 
 class Client(object):
@@ -141,7 +160,7 @@ class Client(object):
         self.set_call_end_time_by_id(self.env, self.id_)
 
 
-# In[8]:
+# In[9]:
 
 
 def client_generator(env):
@@ -152,7 +171,7 @@ def client_generator(env):
         yield env.timeout(1)
 
 
-# In[9]:
+# In[10]:
 
 
 def init_env():
@@ -163,7 +182,7 @@ def init_env():
     return env
 
 
-# In[10]:
+# In[11]:
 
 
 env = init_env()
@@ -171,7 +190,7 @@ for i in tqdm_notebook(range(60)):
     env.run(until=i+1)
 
 
-# In[11]:
+# In[12]:
 
 
 client_ds = get_client_ds(env.client_mx, cl_columns)
@@ -179,7 +198,7 @@ print(client_ds.shape)
 client_ds.head()
 
 
-# In[12]:
+# In[13]:
 
 
 client_ds['status'].value_counts()
