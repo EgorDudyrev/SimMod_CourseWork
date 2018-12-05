@@ -15,25 +15,6 @@ from tqdm import tqdm_notebook
 
 # Simpy documentation - https://simpy.readthedocs.io/en/latest/contents.html 
 
-# # Data preparation
-
-# In[2]:
-
-
-cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
-               'unblocked', 'drop_on_unblock', 'in_queue', 'drop_from_queue', 'connected',
-               'drop_success']
-map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
-map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
-
-
-# In[3]:
-
-
-cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status']
-cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
-
-
 # ## Useful functions
 
 # In[4]:
@@ -47,6 +28,19 @@ def add_client_to_matrix(matrix, priority, call_start_time):
     data[cl_columns_map['call_start_time']] = call_start_time
     data[cl_columns_map['max_waiting_time']] = 5*60
     data[cl_columns_map['status']] = map_cl_status_code['generated']
+    return id_, np.append(matrix, [data], axis=0)
+
+
+# In[23]:
+
+
+def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=10*60):
+    data = np.array([-1]*matrix.shape[1])
+    id_ = len(matrix)
+    data[op_columns_map['id']] = id_
+    data[op_columns_map['priority']] = priority
+    data[op_columns_map['start_work_time']] = start_work_time
+    data[op_columns_map['work_duration']] = work_duration
     return id_, np.append(matrix, [data], axis=0)
 
 
@@ -67,6 +61,53 @@ def get_client_ds(matrix, columns):
                            'call_start_time','call_start_time_dt','call_end_time', 'call_end_time_dt',
                            'max_waiting_time', 'max_waiting_time_dt'])
     return client_ds
+
+
+# In[29]:
+
+
+def get_operator_ds(matrix, columns):
+    operator_ds = pd.DataFrame(matrix, columns=columns, dtype=np.int)
+    operator_ds['type'] = operator_ds['priority'].transform(lambda x: {1:'gold',2:'silver',3:'regular'}[x])
+    operator_ds['start_work_time_dt'] = operator_ds['start_work_time'].transform(lambda x: dt.timedelta(seconds=x))
+    operator_ds['start_work_time_dt'] = operator_ds['start_work_time_dt'] + dt.datetime(2018,1,1,7)
+    operator_ds['work_duration_dt'] = operator_ds['work_duration'].transform(lambda x: dt.timedelta(seconds=x))
+    operator_ds['end_work_time'] = operator_ds['start_work_time']+operator_ds['work_duration']
+    operator_ds['end_work_time_dt'] = operator_ds['start_work_time_dt']+operator_ds['work_duration_dt']
+    operator_ds = operator_ds.reindex(columns=['id','priority','type', 
+                           'start_work_time','start_work_time_dt','end_work_time', 'end_work_time_dt',
+                           'work_duration', 'work_duration_dt'])
+    return operator_ds
+
+
+# # Data preparation
+
+# In[2]:
+
+
+cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
+               'unblocked', 'drop_on_unblock', 'in_queue', 'drop_from_queue', 'connected',
+               'drop_success']
+map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
+map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
+
+
+# In[3]:
+
+
+cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status']
+cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
+
+
+# In[25]:
+
+
+op_columns = ['id', 'priority', 'start_work_time', 'work_duration']
+op_columns_map = {k:idx for idx,k in enumerate(op_columns)}
+op_mx = np.empty([0,len(op_columns)])
+for p, swt in [(3, 0),
+               (3, 10*60)]:
+    id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
 
 
 # # Testing model
@@ -163,7 +204,7 @@ class Client(object):
         self.set_call_end_time_by_id(self.env, self.id_)
 
 
-# In[ ]:
+# In[45]:
 
 
 class Operator(object):
@@ -173,7 +214,9 @@ class Operator(object):
         self.action = env.process(self.run())
         
     def run(self):
-        pass
+        swt = self.env.op_mx[self.id_, op_columns_map['start_work_time']]
+        yield self.env.timeout(swt)
+        yield self.env.timeout(10*60)
 
 
 # In[9]:
@@ -185,12 +228,6 @@ def client_generator(env):
             id_, env.client_mx = add_client_to_matrix(env.client_mx, 3, env.now)
             client = Client(env, id_)
         yield env.timeout(1)
-
-
-# In[ ]:
-
-
-def 
 
 
 # In[10]:
