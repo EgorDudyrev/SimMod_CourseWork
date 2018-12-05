@@ -11954,9 +11954,13 @@ div#notebook {
         <span class="n">Client</span><span class="o">.</span><span class="n">set_status_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">cl_id</span><span class="p">,</span> <span class="s1">&#39;blocked&#39;</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>
         <span class="n">Client</span><span class="o">.</span><span class="n">set_status_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">cl_id</span><span class="p">,</span> <span class="s1">&#39;unblocked&#39;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">cl_id</span><span class="p">))</span>
+        <span class="n">Client</span><span class="o">.</span><span class="n">set_status_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">cl_id</span><span class="p">,</span> <span class="s1">&#39;in_queue&#39;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">req</span>
         
     <span class="k">def</span> <span class="nf">release_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">req</span><span class="o">.</span><span class="n">cl_id</span> <span class="ow">in</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">item</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">items</span><span class="p">]:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">item</span><span class="o">==</span><span class="n">req</span><span class="o">.</span><span class="n">cl_id</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
         <span class="n">Client</span><span class="o">.</span><span class="n">set_call_end_time_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="n">req</span><span class="o">.</span><span class="n">cl_id</span><span class="p">)</span>
     
@@ -11986,10 +11990,9 @@ div#notebook {
             <span class="n">req</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">cc</span><span class="o">.</span><span class="n">request_line</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">))</span>
         <span class="k">except</span> <span class="n">cc</span><span class="o">.</span><span class="n">NoLinesAvailable</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
             <span class="k">return</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;connected&#39;</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">]])</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">cc</span><span class="o">.</span><span class="n">release_line</span><span class="p">(</span><span class="n">req</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;drop_success&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;drop_from_queue&#39;</span><span class="p">)</span>
         
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">set_status_by_id</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
@@ -12053,7 +12056,7 @@ div#notebook {
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">init_env</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm_notebook</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">60</span><span class="p">)):</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm_notebook</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">6</span><span class="o">*</span><span class="mi">60</span><span class="p">)):</span>
     <span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">until</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
@@ -12075,13 +12078,13 @@ div#notebook {
 
  
  
-<div id="14ee5a5f-ba7c-4c74-943e-fcbc301048f6"></div>
+<div id="d8c51f34-3137-4272-9006-abd03a341a8b"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
+var element = $('#d8c51f34-3137-4272-9006-abd03a341a8b');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "1d28e898952b4b21a5f204c06869202c", "version_major": 2, "version_minor": 0}
+{"model_id": "5f8287b3d0794652911d1e0bfab8e311", "version_major": 2, "version_minor": 0}
 </script>
 </div>
 
@@ -12126,7 +12129,7 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(25, 11)
+<pre>(166, 11)
 </pre>
 </div>
 </div>
@@ -12175,12 +12178,12 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
       <td>0</td>
       <td>3</td>
       <td>regular</td>
-      <td>10</td>
-      <td>drop_success</td>
-      <td>0</td>
-      <td>2018-01-01 07:00:00</td>
-      <td>11</td>
-      <td>2018-01-01 07:00:11</td>
+      <td>8</td>
+      <td>drop_from_queue</td>
+      <td>5</td>
+      <td>2018-01-01 07:00:05</td>
+      <td>313</td>
+      <td>2018-01-01 07:05:13</td>
       <td>300</td>
       <td>00:05:00</td>
     </tr>
@@ -12189,12 +12192,12 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
       <td>1</td>
       <td>3</td>
       <td>regular</td>
-      <td>10</td>
-      <td>drop_success</td>
-      <td>1</td>
-      <td>2018-01-01 07:00:01</td>
-      <td>12</td>
-      <td>2018-01-01 07:00:12</td>
+      <td>8</td>
+      <td>drop_from_queue</td>
+      <td>6</td>
+      <td>2018-01-01 07:00:06</td>
+      <td>314</td>
+      <td>2018-01-01 07:05:14</td>
       <td>300</td>
       <td>00:05:00</td>
     </tr>
@@ -12205,8 +12208,8 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
       <td>regular</td>
       <td>3</td>
       <td>no_lines</td>
-      <td>3</td>
-      <td>2018-01-01 07:00:03</td>
+      <td>7</td>
+      <td>2018-01-01 07:00:07</td>
       <td>-1</td>
       <td>NaT</td>
       <td>300</td>
@@ -12219,8 +12222,8 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
       <td>regular</td>
       <td>3</td>
       <td>no_lines</td>
-      <td>5</td>
-      <td>2018-01-01 07:00:05</td>
+      <td>10</td>
+      <td>2018-01-01 07:00:10</td>
       <td>-1</td>
       <td>NaT</td>
       <td>300</td>
@@ -12233,8 +12236,8 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
       <td>regular</td>
       <td>3</td>
       <td>no_lines</td>
-      <td>7</td>
-      <td>2018-01-01 07:00:07</td>
+      <td>11</td>
+      <td>2018-01-01 07:00:11</td>
       <td>-1</td>
       <td>NaT</td>
       <td>300</td>
@@ -12275,9 +12278,9 @@ var element = $('#14ee5a5f-ba7c-4c74-943e-fcbc301048f6');
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>no_lines        15
-drop_success     9
-blocked          1
+<pre>no_lines           162
+in_queue             2
+drop_from_queue      2
 Name: status, dtype: int64</pre>
 </div>
 

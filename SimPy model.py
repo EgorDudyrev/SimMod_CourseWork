@@ -115,9 +115,13 @@ class CallCenter(object):
         Client.set_status_by_id(self.env, cl_id, 'blocked')
         yield self.env.timeout(8)
         Client.set_status_by_id(self.env, cl_id, 'unblocked')
+        yield self.queue.put(sp.PriorityItem(cl_priority, cl_id))
+        Client.set_status_by_id(self.env, cl_id, 'in_queue')
         return req
         
     def release_line(self, req):
+        if req.cl_id in [i.item for i in self.queue.items]:
+            yield self.queue.get(lambda x: x.item==req.cl_id)
         yield self.lines.release(req)
         Client.set_call_end_time_by_id(self.env, req.cl_id)
     
@@ -140,10 +144,9 @@ class Client(object):
             req = yield self.env.process(cc.request_line(self.id_))
         except cc.NoLinesAvailable as e:
             return
-        self.set_status('connected')
-        yield self.env.timeout(3)
+        yield self.env.timeout(self.env.client_mx[self.id_,cl_columns_map['max_waiting_time']])
         yield self.env.process(cc.release_line(req))
-        self.set_status('drop_success')
+        self.set_status('drop_from_queue')
         
     @staticmethod
     def set_status_by_id(env, id_, status):
@@ -186,7 +189,7 @@ def init_env():
 
 
 env = init_env()
-for i in tqdm_notebook(range(60)):
+for i in tqdm_notebook(range(6*60)):
     env.run(until=i+1)
 
 
