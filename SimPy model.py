@@ -17,7 +17,7 @@ from tqdm import tqdm_notebook
 
 # ## Useful functions
 
-# In[4]:
+# In[2]:
 
 
 def add_client_to_matrix(matrix, priority, call_start_time):
@@ -26,12 +26,12 @@ def add_client_to_matrix(matrix, priority, call_start_time):
     data[cl_columns_map['id']] = id_
     data[cl_columns_map['priority']] = priority
     data[cl_columns_map['call_start_time']] = call_start_time
-    data[cl_columns_map['max_waiting_time']] = 5*60
+    data[cl_columns_map['max_waiting_time']] = 9*60
     data[cl_columns_map['status']] = map_cl_status_code['generated']
     return id_, np.append(matrix, [data], axis=0)
 
 
-# In[23]:
+# In[3]:
 
 
 def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=10*60):
@@ -44,7 +44,7 @@ def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=10*6
     return id_, np.append(matrix, [data], axis=0)
 
 
-# In[5]:
+# In[4]:
 
 
 def get_client_ds(matrix, columns):
@@ -63,7 +63,7 @@ def get_client_ds(matrix, columns):
     return client_ds
 
 
-# In[29]:
+# In[5]:
 
 
 def get_operator_ds(matrix, columns):
@@ -82,7 +82,7 @@ def get_operator_ds(matrix, columns):
 
 # # Data preparation
 
-# In[2]:
+# In[6]:
 
 
 cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
@@ -92,27 +92,33 @@ map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
 map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
 
 
-# In[3]:
+# In[7]:
 
 
 cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status']
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
-# In[25]:
+# In[8]:
 
 
 op_columns = ['id', 'priority', 'start_work_time', 'work_duration']
 op_columns_map = {k:idx for idx,k in enumerate(op_columns)}
-op_mx = np.empty([0,len(op_columns)])
+op_mx = np.empty([0,len(op_columns)], dtype=np.int)
 for p, swt in [(3, 0),
                (3, 10*60)]:
     id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
 
 
+# In[9]:
+
+
+VERY_LONG_TIME = 12*60
+
+
 # # Testing model
 
-# In[6]:
+# In[10]:
 
 
 class Queue(sp.PriorityStore):
@@ -130,7 +136,7 @@ class Queue(sp.PriorityStore):
         return True
 
 
-# In[7]:
+# In[11]:
 
 
 class CallCenter(object):
@@ -141,53 +147,110 @@ class CallCenter(object):
         self.lines = sp.Resource(env, capacity=self.n_lines)
         self.queue = Queue(env)
 
-    def request_line(self, cl_id):
-        cl_priority = self.env.client_mx[cl_id, cl_columns_map['priority']]
+    def request_line(self, client):
+        cl_id = client.id_
+        cl_priority = self.env.client_mx[client.id_, cl_columns_map['priority']]
         n_lines_to_give = self.n_lines-self.n_vip_lines if cl_priority==3 else self.n_lines
-        Client.set_status_by_id(self.env, cl_id, 'ask_for_line')
         if self.lines.count<n_lines_to_give:
             req = self.lines.request()
             req.cl_id = cl_id
+            client.req = req
             yield req
-            Client.set_status_by_id(self.env, cl_id, 'get_line')
+            client.set_status('get_line')
         else:
-            Client.set_status_by_id(self.env, cl_id, 'no_lines')
             raise self.NoLinesAvailable()
-        Client.set_status_by_id(self.env, cl_id, 'blocked')
-        yield self.env.timeout(8)
-        Client.set_status_by_id(self.env, cl_id, 'unblocked')
-        yield self.queue.put(sp.PriorityItem(cl_priority, cl_id))
-        Client.set_status_by_id(self.env, cl_id, 'in_queue')
-        return req
-        
-    def release_line(self, req):
-        if req.cl_id in [i.item for i in self.queue.items]:
-            yield self.queue.get(lambda x: x.item==req.cl_id)
-        yield self.lines.release(req)
-        Client.set_call_end_time_by_id(self.env, req.cl_id)
+        yield self.env.process(self.put_to_queue(client))
+    
+    def release_line(self, client):
+        if client.id_ in [i.item.id_ for i in self.queue.items]:
+            yield self.queue.get(lambda x: x.item.id_==client.id_)
+        yield self.lines.release(client.req)
+    
+    def put_to_queue(self, client):
+        cl_id = client.id_
+        cl_priority = self.env.client_mx[client.id_, cl_columns_map['priority']]
+        if cl_priority == 3:
+            yield self.queue.put(sp.PriorityItem(cl_priority, client))
+            client.put_in_queue.succeed()
+            yield self.env.timeout(1)
+            if client in [x.item for x in self.queue.items]:
+                yield self.queue.get(lambda x: x.item.id_==client.id_)
+                client.waiting_queue.interrupt()
+                client.block.succeed()
+                yield self.env.timeout(7)
+                dropped = yield self.env.process(client.decide_to_drop_unblock(6*60))
+                if not dropped:
+                    yield self.queue.put(sp.PriorityItem(cl_priority, client))
+                    client.put_in_queue.succeed()
+        else:
+            client.block.succeed()
+            yield self.env.timeout(10)
+            yield self.queue.put(sp.PriorityItem(cl_priority, client))
+            client.put_in_queue.succeed()
     
     class NoLinesAvailable(sp.exceptions.SimPyException):
         pass
 
 
-# In[8]:
+# In[12]:
 
 
 class Client(object):
     def __init__(self, env, id_):
         self.env = env
         self.id_ = id_
-        self.action = env.process(self.run())
+        
+        self.put_in_queue, self.get_from_queue = env.event(), env.event()
+        self.block, self.unblock = env.event(), env.event()
+        self.connect, self.disconnect = env.event(), env.event()
+                
+        self.waiting_block = env.process(self.wait_in_block())
+        self.waiting_queue = env.process(self.wait_in_queue())
+        self.talking_proc = env.process(self.talk_with_operator())
+        self.action = env.process(self.call())
     
-    def run(self):
+    def call(self):
         cc = self.env.call_center
         try:
-            req = yield self.env.process(cc.request_line(self.id_))
+            self.set_status('ask_for_line')
+            yield self.env.process(cc.request_line(self))
         except cc.NoLinesAvailable as e:
+            self.set_status('no_lines')
             return
-        yield self.env.timeout(self.env.client_mx[self.id_,cl_columns_map['max_waiting_time']])
-        yield self.env.process(cc.release_line(req))
-        self.set_status('drop_from_queue')
+    
+    def drop_call(self, status):
+        yield self.env.process(self.env.call_center.release_line(self))
+        self.env.client_mx[self.id_, cl_columns_map['call_end_time']] = self.env.now
+        self.set_status(status)
+    
+    def wait_in_queue(self):
+        while True:
+            yield self.put_in_queue
+            self.set_status('in_queue')
+            try:
+                yield self.env.timeout(VERY_LONG_TIME)
+                yield self.env.process(self.drop_call('drop_from_queue'))
+            except sp.Interrupt: 
+                pass
+            self.put_in_queue = self.env.event()
+        
+    def wait_in_block(self):
+        yield self.block
+        self.set_status('blocked')
+        
+    def decide_to_drop_unblock(self, time_to_wait):
+        mwt = self.env.client_mx[self.id_, cl_columns_map['max_waiting_time']]
+        if time_to_wait > mwt:
+            yield self.env.process(self.drop_call('drop_on_unblock'))
+            return True
+        return False
+        
+    def talk_with_operator(self):
+        yield self.connect
+        self.set_status('connected')
+        yield self.disconnect
+        yield self.env.process(cc.release_line(self.req))
+        self.set_status('drop_success')
         
     @staticmethod
     def set_status_by_id(env, id_, status):
@@ -204,7 +267,7 @@ class Client(object):
         self.set_call_end_time_by_id(self.env, self.id_)
 
 
-# In[45]:
+# In[13]:
 
 
 class Operator(object):
@@ -216,10 +279,11 @@ class Operator(object):
     def run(self):
         swt = self.env.op_mx[self.id_, op_columns_map['start_work_time']]
         yield self.env.timeout(swt)
-        yield self.env.timeout(10*60)
+        wd = self.env.op_mx[self.id_, op_columns_map['work_duration']]
+        yield self.env.timeout(wd)
 
 
-# In[9]:
+# In[14]:
 
 
 def client_generator(env):
@@ -230,26 +294,28 @@ def client_generator(env):
         yield env.timeout(1)
 
 
-# In[10]:
+# In[15]:
 
 
 def init_env():
     env = sp.Environment()
-    env.client_mx = np.empty([0,len(cl_columns)])
+    env.client_mx = np.empty([0,len(cl_columns)], dtype=np.int)
+    env.op_mx = op_mx
     env.call_center = CallCenter(env, 2,0)
     env.client_generator = env.process(client_generator(env))
+    env.operators = [Operator(env, id_) for id_ in op_mx[:,op_columns_map['id']]]
     return env
 
 
-# In[11]:
+# In[16]:
 
 
 env = init_env()
-for i in tqdm_notebook(range(6*60)):
+for i in tqdm_notebook(range(20*60)):
     env.run(until=i+1)
 
 
-# In[12]:
+# In[17]:
 
 
 client_ds = get_client_ds(env.client_mx, cl_columns)
@@ -257,7 +323,13 @@ print(client_ds.shape)
 client_ds.head()
 
 
-# In[13]:
+# In[18]:
+
+
+env.call_center.queue.items
+
+
+# In[19]:
 
 
 client_ds['status'].value_counts()
