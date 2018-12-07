@@ -11813,12 +11813,15 @@ div#notebook {
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">add_client_to_matrix</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">call_start_time</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calling at client_generator</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">id_</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
     <span class="n">data</span><span class="p">[</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">id_</span>
     <span class="n">data</span><span class="p">[</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">priority</span>
     <span class="n">data</span><span class="p">[</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;call_start_time&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">call_start_time</span>
-    <span class="n">data</span><span class="p">[</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">9</span><span class="o">*</span><span class="mi">60</span>
+    <span class="n">data</span><span class="p">[</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">9</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span> <span class="c1">#CHANGE TO RANDOM VALUE</span>
     <span class="n">data</span><span class="p">[</span><span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">map_cl_status_code</span><span class="p">[</span><span class="s1">&#39;generated&#39;</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">id_</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="p">[</span><span class="n">data</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
@@ -11834,6 +11837,9 @@ div#notebook {
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">add_operator_to_matrix</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">priority</span><span class="p">,</span> <span class="n">start_work_time</span><span class="p">,</span> <span class="n">work_duration</span><span class="o">=</span><span class="mi">10</span><span class="o">*</span><span class="mi">60</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Call manually when configuring operators shedule</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="n">id_</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
     <span class="n">data</span><span class="p">[</span><span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">id_</span>
@@ -11853,8 +11859,12 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_client_ds</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
-    <span class="n">client_ds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_client_ds</span><span class="p">(</span><span class="n">env</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get pretty DataFrame with all the clients information</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span>
+    <span class="n">client_ds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">cl_columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
     <span class="n">client_ds</span> <span class="o">=</span> <span class="n">client_ds</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">map_code_cl_status</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
     <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="s1">&#39;gold&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="s1">&#39;silver&#39;</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="s1">&#39;regular&#39;</span><span class="p">}[</span><span class="n">x</span><span class="p">])</span>
@@ -11886,8 +11896,9 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[5]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_operator_ds</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
-    <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_operator_ds</span><span class="p">(</span><span class="n">env</span><span class="p">):</span>
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">op_mx</span>
+    <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">op_columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
     <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="s1">&#39;gold&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="s1">&#39;silver&#39;</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="s1">&#39;regular&#39;</span><span class="p">}[</span><span class="n">x</span><span class="p">])</span>
     <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;end_work_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;work_duration&#39;</span><span class="p">]</span>
@@ -11956,22 +11967,9 @@ div#notebook {
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">op_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="s1">&#39;priority&#39;</span><span class="p">,</span> <span class="s1">&#39;start_work_time&#39;</span><span class="p">,</span> <span class="s1">&#39;work_duration&#39;</span><span class="p">]</span>
 <span class="n">op_columns_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span><span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">op_columns</span><span class="p">)}</span>
 <span class="n">op_mx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">op_columns</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">swt</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-               <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">10</span><span class="o">*</span><span class="mi">60</span><span class="p">)]:</span>
+<span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">swt</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span><span class="p">),</span>
+               <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span><span class="p">)]:</span>
     <span class="n">id_</span><span class="p">,</span> <span class="n">op_mx</span> <span class="o">=</span> <span class="n">add_operator_to_matrix</span><span class="p">(</span><span class="n">op_mx</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">swt</span><span class="p">)</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[9]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">VERY_LONG_TIME</span> <span class="o">=</span> <span class="mi">12</span><span class="o">*</span><span class="mi">60</span>
 </pre></div>
 
 </div>
@@ -11989,11 +11987,15 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Queue</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityStore</span><span class="p">):</span>
-    
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Queue where clients are waiting till operators catch them.</span>
+<span class="sd">    Combination of simpy PriorityStore and FilterStore.</span>
+<span class="sd">    When calling get(filter) it return item (client) with least priority (the most important) who matches filter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">get</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">BoundClass</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">resources</span><span class="o">.</span><span class="n">store</span><span class="o">.</span><span class="n">FilterStoreGet</span><span class="p">)</span>
     <span class="sd">&quot;&quot;&quot;Request a to get an *item*, for which *filter* returns ``True``, out of</span>
 <span class="sd">    the store.&quot;&quot;&quot;</span>
@@ -12014,7 +12016,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">CallCenter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -12026,6 +12028,9 @@ div#notebook {
         <span class="bp">self</span><span class="o">.</span><span class="n">queue</span> <span class="o">=</span> <span class="n">Queue</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">request_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute when client starts calling</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cl_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">id_</span>
         <span class="n">cl_priority</span> <span class="o">=</span>  <span class="n">client</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
         <span class="n">n_lines_to_give</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">n_vip_lines</span> <span class="k">if</span> <span class="n">cl_priority</span><span class="o">==</span><span class="mi">3</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span>
@@ -12040,6 +12045,9 @@ div#notebook {
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">put_to_queue</span><span class="p">(</span><span class="n">client</span><span class="p">))</span>
     
     <span class="k">def</span> <span class="nf">release_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute when client dropped the phone</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">client</span><span class="o">.</span><span class="n">id_</span> <span class="ow">in</span> <span class="p">[</span><span class="n">i</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">id_</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">items</span><span class="p">]:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">id_</span><span class="o">==</span><span class="n">client</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">release</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">req</span><span class="p">)</span>
@@ -12051,7 +12059,7 @@ div#notebook {
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
             <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-            <span class="c1"># Если клиент всё ещё в очереди, то оцениваем время его ожидания</span>
+            <span class="c1"># If client is still in queue, estimate its waiting time</span>
             <span class="k">if</span> <span class="n">client</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">item</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">items</span><span class="p">]:</span>
                 <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">id_</span><span class="o">==</span><span class="n">client</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
                 <span class="n">client</span><span class="o">.</span><span class="n">waiting_queue</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span>
@@ -12060,16 +12068,27 @@ div#notebook {
             <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_client</span><span class="p">(</span><span class="n">client</span><span class="p">))</span>
             
     <span class="k">def</span> <span class="nf">request_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute when operator is freed and ready to take another client</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">op_id</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">id_</span>
-        <span class="n">op_priority</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="n">operator</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]]</span>
-        <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">priority</span><span class="o">&gt;=</span><span class="n">op_priority</span><span class="p">)</span>
+        <span class="n">op_priority</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">cl</span><span class="p">:</span> <span class="n">cl</span><span class="o">.</span><span class="n">priority</span><span class="o">&lt;=</span><span class="n">op_priority</span><span class="p">)</span>
         <span class="n">client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">item</span>
         <span class="k">return</span> <span class="n">client</span>
     
     <span class="k">def</span> <span class="nf">block_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Execute when client should be blocked.</span>
+<span class="sd">        For regular clients: &quot;blocking&quot; is when system &quot;estimates&quot; time for client to wait in queue</span>
+<span class="sd">        For vip clients: &quot;blocking&quot; is &quot;entering&quot; vip card ids</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">client</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
         <span class="n">cl_priority</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
-        <span class="n">block_time</span> <span class="o">=</span> <span class="mi">7</span> <span class="k">if</span> <span class="n">cl_priority</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="mi">10</span> 
+        <span class="k">if</span> <span class="n">cl_priority</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">block_time</span> <span class="o">=</span> <span class="mi">7</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">block_time</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1">#CHANGE TO RANDOM VALUE</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">block_time</span><span class="p">)</span>
         <span class="n">ttw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_wait_time</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
         <span class="n">dropped</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">decide_to_drop_unblock</span><span class="p">(</span><span class="n">time_to_wait</span><span class="o">=</span><span class="n">ttw</span><span class="p">))</span>
@@ -12078,9 +12097,15 @@ div#notebook {
             <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
     
     <span class="k">def</span> <span class="nf">estimate_wait_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function to estimate how much time client will wait in queue</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># For testing purposes only</span>
     
     <span class="k">class</span> <span class="nc">NoLinesAvailable</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">SimPyException</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Special exception saying there no free phone lines that client cat occupy</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 </pre></div>
 
@@ -12091,7 +12116,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Client</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -12109,6 +12134,9 @@ div#notebook {
         <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">call</span><span class="p">())</span>
     
     <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When client is just generated and calling to system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">cc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">call_center</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;ask_for_line&#39;</span><span class="p">)</span>
@@ -12118,17 +12146,24 @@ div#notebook {
             <span class="k">return</span>
     
     <span class="k">def</span> <span class="nf">drop_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When client wants to drop the phone by some reason given in &#39;status&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">call_center</span><span class="o">.</span><span class="n">release_line</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="nf">wait_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When client waiting in queue till he/she decide to drop the phone</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">put_in_queue</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;in_queue&#39;</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;queue_start_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">VERY_LONG_TIME</span><span class="p">)</span>
+                <span class="n">max_queue_wait_time</span> <span class="o">=</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span> <span class="c1">#CHANGE TO TASK GIVEN LIMITATIONS</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">max_queue_wait_time</span><span class="p">)</span>
                 <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drop_call</span><span class="p">(</span><span class="s1">&#39;drop_from_queue&#39;</span><span class="p">))</span>
             <span class="k">except</span> <span class="n">sp</span><span class="o">.</span><span class="n">Interrupt</span><span class="p">:</span> 
                 <span class="k">pass</span>
@@ -12136,11 +12171,17 @@ div#notebook {
             <span class="bp">self</span><span class="o">.</span><span class="n">put_in_queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">event</span><span class="p">()</span>
         
     <span class="k">def</span> <span class="nf">wait_in_block</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When client is blocked and &quot;do&quot; something mentioned in CallCenter.block_client()</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;blocked&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;block_start_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         
     <span class="k">def</span> <span class="nf">decide_to_drop_unblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_to_wait</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When client is told how much time he/she will wait in queue</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">mwt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;block_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">time_to_wait</span> <span class="o">&gt;</span> <span class="n">mwt</span><span class="p">:</span>
@@ -12149,6 +12190,9 @@ div#notebook {
         <span class="k">return</span> <span class="kc">False</span>
         
     <span class="k">def</span> <span class="nf">talk_with_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        When client is connected with operator and &quot;talks&quot; with him/her</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">waiting_queue</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;connected&#39;</span><span class="p">)</span>
@@ -12158,16 +12202,66 @@ div#notebook {
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drop_call</span><span class="p">(</span><span class="s1">&#39;drop_success&#39;</span><span class="p">))</span>
     
     <span class="k">def</span> <span class="nf">set_mx_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="n">field</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for code to be more readable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="n">field</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span> 
     
     <span class="k">def</span> <span class="nf">set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for code to be more readable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="n">map_cl_status_code</span><span class="p">[</span><span class="n">status</span><span class="p">])</span>
         
     <span class="k">def</span> <span class="nf">set_call_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for code to be more readable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="nf">get_mx_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for code to be more readable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="n">field</span><span class="p">]]</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Operator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">id_</span> <span class="o">=</span> <span class="n">id_</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_working</span><span class="p">())</span>
+        
+    <span class="k">def</span> <span class="nf">start_working</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">swt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">swt</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">working</span><span class="p">())</span>
+        
+    <span class="k">def</span> <span class="nf">working</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">swt</span><span class="p">,</span> <span class="n">wd</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">,</span> <span class="s1">&#39;work_duration&#39;</span><span class="p">]]</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="o">&lt;</span><span class="n">swt</span><span class="o">+</span><span class="n">wd</span><span class="p">:</span>         
+            <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">call_center</span><span class="o">.</span><span class="n">request_client</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;operator_id&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">minutes</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span><span class="p">)</span> <span class="c1">#CHANGE TO RANDOM VALUES</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+            
+    <span class="k">def</span> <span class="nf">get_mx_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Function for code to be more readable</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="n">field</span><span class="p">]]</span>
 </pre></div>
 
 </div>
@@ -12180,27 +12274,14 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[13]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">class</span> <span class="nc">Operator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">env</span> <span class="o">=</span> <span class="n">env</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">id_</span> <span class="o">=</span> <span class="n">id_</span>
-        
-        <span class="bp">self</span><span class="o">.</span><span class="n">action</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_working</span><span class="p">())</span>
-        
-    <span class="k">def</span> <span class="nf">start_working</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">swt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">]]</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">swt</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">working</span><span class="p">())</span>
-        
-    <span class="k">def</span> <span class="nf">working</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">swt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">]]</span>
-        <span class="n">wd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;work_duration&#39;</span><span class="p">]]</span>
-        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="o">&lt;</span><span class="n">swt</span><span class="o">+</span><span class="n">wd</span><span class="p">:</span>         
-            <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">call_center</span><span class="o">.</span><span class="n">request_client</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;operator_id&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">client_generator</span><span class="p">(</span><span class="n">env</span><span class="p">):</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">cl_priority</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">p</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1">#CHANGE_TO_TASK_VALUE</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span><span class="o">&lt;</span><span class="n">p</span><span class="p">:</span>
+                <span class="n">id_</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span> <span class="o">=</span> <span class="n">add_client_to_matrix</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">,</span> <span class="n">cl_priority</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
+                <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
 </div>
@@ -12213,29 +12294,11 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[14]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">client_generator</span><span class="p">(</span><span class="n">env</span><span class="p">):</span>
-    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">rand</span><span class="p">()</span><span class="o">&lt;</span><span class="mf">0.5</span><span class="p">:</span>
-            <span class="n">id_</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span> <span class="o">=</span> <span class="n">add_client_to_matrix</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
-            <span class="n">client</span> <span class="o">=</span> <span class="n">Client</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">)</span>
-        <span class="k">yield</span> <span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-</pre></div>
-
-</div>
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[15]:</div>
-<div class="inner_cell">
-    <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">init_env</span><span class="p">():</span>
     <span class="n">env</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Environment</span><span class="p">()</span>
-    <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">cl_columns</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
-    <span class="n">env</span><span class="o">.</span><span class="n">op_mx</span> <span class="o">=</span> <span class="n">op_mx</span>
-    <span class="n">env</span><span class="o">.</span><span class="n">call_center</span> <span class="o">=</span> <span class="n">CallCenter</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">cl_columns</span><span class="p">)],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span> <span class="c1">#matrix to write clients data</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">op_mx</span> <span class="o">=</span> <span class="n">op_mx</span> <span class="c1">#matrix with operators data</span>
+    <span class="n">env</span><span class="o">.</span><span class="n">call_center</span> <span class="o">=</span> <span class="n">CallCenter</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">n_lines</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">n_vip_lines</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> 
     <span class="n">env</span><span class="o">.</span><span class="n">client_generator</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">client_generator</span><span class="p">(</span><span class="n">env</span><span class="p">))</span>
     <span class="n">env</span><span class="o">.</span><span class="n">operators</span> <span class="o">=</span> <span class="p">[</span><span class="n">Operator</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">)</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">op_mx</span><span class="p">[:,</span><span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]]</span>
     <span class="k">return</span> <span class="n">env</span>
@@ -12248,11 +12311,11 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">env</span> <span class="o">=</span> <span class="n">init_env</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm_notebook</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="o">*</span><span class="mi">60</span><span class="p">)):</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">tqdm_notebook</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">minutes</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">seconds</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">seconds</span><span class="p">)):</span>
     <span class="n">env</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">until</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 
@@ -12274,13 +12337,13 @@ div#notebook {
 
  
  
-<div id="32317886-b24f-4435-b756-864bcdcddf78"></div>
+<div id="03a7675c-a178-4371-83d5-1da23f9a5beb"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
+var element = $('#03a7675c-a178-4371-83d5-1da23f9a5beb');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "b58586f9d59e4ff2b63bbe3bf384d2c9", "version_major": 2, "version_minor": 0}
+{"model_id": "fe9221ec175a41ed93ae38735db6bbd9", "version_major": 2, "version_minor": 0}
 </script>
 </div>
 
@@ -12303,10 +12366,10 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">client_ds</span> <span class="o">=</span> <span class="n">get_client_ds</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">,</span> <span class="n">cl_columns</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">client_ds</span> <span class="o">=</span> <span class="n">get_client_ds</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">client_ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">client_ds</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
@@ -12325,14 +12388,14 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(606, 17)
+<pre>(1811, 17)
 </pre>
 </div>
 </div>
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[17]:</div>
+<div class="prompt output_prompt">Out[16]:</div>
 
 
 
@@ -12380,19 +12443,19 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
       <td>0</td>
       <td>drop_success</td>
       <td>0.0</td>
-      <td>regular</td>
+      <td>gold</td>
       <td>00:09:00</td>
       <td>2018-01-01 07:00:00</td>
-      <td>2018-01-01 07:01:00</td>
-      <td>00:01:00</td>
-      <td>NaT</td>
-      <td>NaT</td>
-      <td>NaT</td>
+      <td>2018-01-01 07:01:10</td>
+      <td>00:01:10</td>
       <td>2018-01-01 07:00:00</td>
-      <td>2018-01-01 07:00:00</td>
+      <td>2018-01-01 07:00:10</td>
+      <td>00:00:10</td>
+      <td>2018-01-01 07:00:10</td>
+      <td>2018-01-01 07:00:10</td>
       <td>00:00:00</td>
-      <td>2018-01-01 07:00:00</td>
-      <td>2018-01-01 07:01:00</td>
+      <td>2018-01-01 07:00:10</td>
+      <td>2018-01-01 07:01:10</td>
       <td>00:01:00</td>
     </tr>
     <tr>
@@ -12400,19 +12463,19 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
       <td>1</td>
       <td>drop_success</td>
       <td>0.0</td>
-      <td>regular</td>
+      <td>silver</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:03</td>
-      <td>2018-01-01 07:02:00</td>
-      <td>00:01:57</td>
-      <td>2018-01-01 07:00:04</td>
-      <td>2018-01-01 07:00:11</td>
-      <td>00:00:07</td>
-      <td>2018-01-01 07:00:11</td>
-      <td>2018-01-01 07:01:00</td>
-      <td>00:00:49</td>
-      <td>2018-01-01 07:01:00</td>
-      <td>2018-01-01 07:02:00</td>
+      <td>2018-01-01 07:00:00</td>
+      <td>2018-01-01 07:02:10</td>
+      <td>00:02:10</td>
+      <td>2018-01-01 07:00:00</td>
+      <td>2018-01-01 07:00:10</td>
+      <td>00:00:10</td>
+      <td>2018-01-01 07:00:10</td>
+      <td>2018-01-01 07:01:10</td>
+      <td>00:01:00</td>
+      <td>2018-01-01 07:01:10</td>
+      <td>2018-01-01 07:02:10</td>
       <td>00:01:00</td>
     </tr>
     <tr>
@@ -12422,7 +12485,7 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
       <td>NaN</td>
       <td>regular</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:04</td>
+      <td>2018-01-01 07:00:00</td>
       <td>NaT</td>
       <td>NaT</td>
       <td>NaT</td>
@@ -12440,9 +12503,9 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
       <td>3</td>
       <td>no_lines</td>
       <td>NaN</td>
-      <td>regular</td>
+      <td>gold</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:05</td>
+      <td>2018-01-01 07:00:01</td>
       <td>NaT</td>
       <td>NaT</td>
       <td>NaT</td>
@@ -12460,9 +12523,9 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
       <td>4</td>
       <td>no_lines</td>
       <td>NaN</td>
-      <td>regular</td>
+      <td>silver</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:07</td>
+      <td>2018-01-01 07:00:01</td>
       <td>NaT</td>
       <td>NaT</td>
       <td>NaT</td>
@@ -12488,7 +12551,7 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
@@ -12504,16 +12567,16 @@ var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[18]:</div>
+<div class="prompt output_prompt">Out[17]:</div>
 
 
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>no_lines        585
-drop_success     19
-connected         1
-in_queue          1
+<pre>no_lines        1790
+drop_success      19
+connected          1
+in_queue           1
 Name: status, dtype: int64</pre>
 </div>
 
@@ -12525,10 +12588,10 @@ Name: status, dtype: int64</pre>
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">op_ds</span> <span class="o">=</span> <span class="n">get_operator_ds</span><span class="p">(</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">,</span> <span class="n">op_columns</span><span class="p">)</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">op_ds</span> <span class="o">=</span> <span class="n">get_operator_ds</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">op_ds</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="n">op_ds</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
 </pre></div>
@@ -12554,7 +12617,7 @@ Name: status, dtype: int64</pre>
 
 <div class="output_area">
 
-<div class="prompt output_prompt">Out[19]:</div>
+<div class="prompt output_prompt">Out[18]:</div>
 
 
 
