@@ -11855,17 +11855,24 @@ div#notebook {
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_client_ds</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
     <span class="n">client_ds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
-    <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status_code&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span>
+    <span class="n">client_ds</span> <span class="o">=</span> <span class="n">client_ds</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">map_code_cl_status</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>
     <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="s1">&#39;gold&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="s1">&#39;silver&#39;</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="s1">&#39;regular&#39;</span><span class="p">}[</span><span class="n">x</span><span class="p">])</span>
-    <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_start_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_start_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
-    <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_start_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_start_time_dt&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span>
-    <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_end_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">&gt;=</span><span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
-    <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_end_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;call_end_time_dt&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span>
+    <span class="n">client_ds</span> <span class="o">=</span> <span class="n">client_ds</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;max_waiting_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
-    <span class="n">client_ds</span> <span class="o">=</span> <span class="n">client_ds</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> <span class="s1">&#39;status_code&#39;</span><span class="p">,</span><span class="s1">&#39;status&#39;</span><span class="p">,</span>
-                           <span class="s1">&#39;call_start_time&#39;</span><span class="p">,</span><span class="s1">&#39;call_start_time_dt&#39;</span><span class="p">,</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span> <span class="s1">&#39;call_end_time_dt&#39;</span><span class="p">,</span>
-                           <span class="s1">&#39;max_waiting_time&#39;</span><span class="p">,</span> <span class="s1">&#39;max_waiting_time_dt&#39;</span><span class="p">])</span>
+    <span class="n">client_ds</span> <span class="o">=</span> <span class="n">client_ds</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">,</span><span class="s1">&#39;block&#39;</span><span class="p">,</span><span class="s1">&#39;queue&#39;</span><span class="p">,</span><span class="s1">&#39;connect&#39;</span><span class="p">]:</span>
+        <span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_duration_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_end_time&#39;</span><span class="p">]</span><span class="o">-</span><span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_start_time&#39;</span><span class="p">]</span>
+    
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;call&#39;</span><span class="p">,</span> <span class="s1">&#39;block&#39;</span><span class="p">,</span> <span class="s1">&#39;queue&#39;</span><span class="p">,</span> <span class="s1">&#39;connect&#39;</span><span class="p">]:</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;start&#39;</span><span class="p">,</span><span class="s1">&#39;end&#39;</span><span class="p">,</span><span class="s1">&#39;duration&#39;</span><span class="p">]:</span>
+            <span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_</span><span class="si">{j}</span><span class="s1">_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_</span><span class="si">{j}</span><span class="s1">_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">&gt;=</span><span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">j</span><span class="o">!=</span><span class="s1">&#39;duration&#39;</span><span class="p">:</span>
+                <span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_</span><span class="si">{j}</span><span class="s1">_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">client_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_</span><span class="si">{j}</span><span class="s1">_time_dt&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span>
+            <span class="n">client_ds</span> <span class="o">=</span> <span class="n">client_ds</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_</span><span class="si">{j}</span><span class="s1">_time&#39;</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    
     <span class="k">return</span> <span class="n">client_ds</span>
 </pre></div>
 
@@ -11881,15 +11888,16 @@ div#notebook {
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="k">def</span> <span class="nf">get_operator_ds</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="p">):</span>
     <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">columns</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+    <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
     <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span><span class="s1">&#39;gold&#39;</span><span class="p">,</span><span class="mi">2</span><span class="p">:</span><span class="s1">&#39;silver&#39;</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="s1">&#39;regular&#39;</span><span class="p">}[</span><span class="n">x</span><span class="p">])</span>
-    <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
-    <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time_dt&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span>
-    <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;work_duration_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;work_duration&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">))</span>
     <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;end_work_time&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;work_duration&#39;</span><span class="p">]</span>
-    <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;end_work_time_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;start_work_time_dt&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">operator_ds</span><span class="p">[</span><span class="s1">&#39;work_duration_dt&#39;</span><span class="p">]</span>
-    <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="o">.</span><span class="n">reindex</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span><span class="s1">&#39;type&#39;</span><span class="p">,</span> 
-                           <span class="s1">&#39;start_work_time&#39;</span><span class="p">,</span><span class="s1">&#39;start_work_time_dt&#39;</span><span class="p">,</span><span class="s1">&#39;end_work_time&#39;</span><span class="p">,</span> <span class="s1">&#39;end_work_time_dt&#39;</span><span class="p">,</span>
-                           <span class="s1">&#39;work_duration&#39;</span><span class="p">,</span> <span class="s1">&#39;work_duration_dt&#39;</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;start_work_time&#39;</span><span class="p">,</span> <span class="s1">&#39;end_work_time&#39;</span><span class="p">,</span> <span class="s1">&#39;work_duration&#39;</span><span class="p">]:</span>
+            <span class="n">operator_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="n">x</span><span class="o">&gt;=</span><span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s1">&#39;duration&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">i</span><span class="p">:</span>
+                <span class="n">operator_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_dt&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="p">[</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{i}</span><span class="s1">_dt&#39;</span><span class="p">]</span><span class="o">+</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="mi">2018</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">7</span><span class="p">)</span>
+    
+    <span class="n">operator_ds</span> <span class="o">=</span> <span class="n">operator_ds</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span> <span class="s1">&#39;start_work_time&#39;</span><span class="p">,</span> <span class="s1">&#39;work_duration&#39;</span><span class="p">,</span> <span class="s1">&#39;end_work_time&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">operator_ds</span>
 </pre></div>
 
@@ -11928,7 +11936,10 @@ div#notebook {
 <div class="prompt input_prompt">In&nbsp;[7]:</div>
 <div class="inner_cell">
     <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="n">cl_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span><span class="s1">&#39;call_start_time&#39;</span><span class="p">,</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">,</span><span class="s1">&#39;status&#39;</span><span class="p">]</span>
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">cl_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="s1">&#39;priority&#39;</span><span class="p">,</span><span class="s1">&#39;call_start_time&#39;</span><span class="p">,</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">,</span><span class="s1">&#39;status&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;block_start_time&#39;</span><span class="p">,</span> <span class="s1">&#39;block_end_time&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;queue_start_time&#39;</span><span class="p">,</span> <span class="s1">&#39;queue_end_time&#39;</span><span class="p">,</span>
+             <span class="s1">&#39;connect_start_time&#39;</span><span class="p">,</span> <span class="s1">&#39;connect_end_time&#39;</span><span class="p">,</span> <span class="s1">&#39;operator_id&#39;</span><span class="p">]</span>
 <span class="n">cl_columns_map</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span><span class="p">,</span><span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cl_columns</span><span class="p">)}</span>
 </pre></div>
 
@@ -12016,7 +12027,7 @@ div#notebook {
 
     <span class="k">def</span> <span class="nf">request_line</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
         <span class="n">cl_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">id_</span>
-        <span class="n">cl_priority</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]]</span>
+        <span class="n">cl_priority</span> <span class="o">=</span>  <span class="n">client</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
         <span class="n">n_lines_to_give</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">n_vip_lines</span> <span class="k">if</span> <span class="n">cl_priority</span><span class="o">==</span><span class="mi">3</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_lines</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">count</span><span class="o">&lt;</span><span class="n">n_lines_to_give</span><span class="p">:</span>
             <span class="n">req</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">request</span><span class="p">()</span>
@@ -12035,7 +12046,7 @@ div#notebook {
     
     <span class="k">def</span> <span class="nf">put_to_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
         <span class="n">cl_id</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">id_</span>
-        <span class="n">cl_priority</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="n">client</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]]</span>
+        <span class="n">cl_priority</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">cl_priority</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
             <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
@@ -12052,15 +12063,17 @@ div#notebook {
         <span class="k">else</span><span class="p">:</span>
             <span class="n">client</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+            <span class="n">dropped</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">decide_to_drop_unblock</span><span class="p">(</span><span class="n">time_to_wait</span><span class="o">=</span><span class="mi">6</span><span class="o">*</span><span class="mi">60</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dropped</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
+                <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
             
     <span class="k">def</span> <span class="nf">request_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">):</span>
         <span class="n">op_id</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">id_</span>
         <span class="n">op_priority</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="n">operator</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]]</span>
         <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">priority</span><span class="o">&gt;=</span><span class="n">op_priority</span><span class="p">)</span>
         <span class="n">client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">item</span>
-        <span class="k">return</span> <span class="n">client</span>    
+        <span class="k">return</span> <span class="n">client</span>
     
     <span class="k">class</span> <span class="nc">NoLinesAvailable</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">SimPyException</span><span class="p">):</span>
         <span class="k">pass</span>
@@ -12101,26 +12114,30 @@ div#notebook {
     
     <span class="k">def</span> <span class="nf">drop_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">call_center</span><span class="o">.</span><span class="n">release_line</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="n">status</span><span class="p">)</span>
     
     <span class="k">def</span> <span class="nf">wait_in_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">put_in_queue</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;in_queue&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;queue_start_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
             <span class="k">try</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">VERY_LONG_TIME</span><span class="p">)</span>
                 <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drop_call</span><span class="p">(</span><span class="s1">&#39;drop_from_queue&#39;</span><span class="p">))</span>
             <span class="k">except</span> <span class="n">sp</span><span class="o">.</span><span class="n">Interrupt</span><span class="p">:</span> 
                 <span class="k">pass</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;queue_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">put_in_queue</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">event</span><span class="p">()</span>
         
     <span class="k">def</span> <span class="nf">wait_in_block</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">block</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;blocked&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;block_start_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         
     <span class="k">def</span> <span class="nf">decide_to_drop_unblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time_to_wait</span><span class="p">):</span>
-        <span class="n">mwt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">]]</span>
+        <span class="n">mwt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;max_waiting_time&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;block_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">time_to_wait</span> <span class="o">&gt;</span> <span class="n">mwt</span><span class="p">:</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drop_call</span><span class="p">(</span><span class="s1">&#39;drop_on_unblock&#39;</span><span class="p">))</span>
             <span class="k">return</span> <span class="kc">True</span>
@@ -12128,23 +12145,24 @@ div#notebook {
         
     <span class="k">def</span> <span class="nf">talk_with_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">connect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waiting_queue</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">set_status</span><span class="p">(</span><span class="s1">&#39;connected&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;connect_start_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">disconnect</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;connect_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
         <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drop_call</span><span class="p">(</span><span class="s1">&#39;drop_success&#39;</span><span class="p">))</span>
-        
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">set_status_by_id</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
-        <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;status&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">map_cl_status_code</span><span class="p">[</span><span class="n">status</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">set_mx_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="n">field</span><span class="p">]]</span> <span class="o">=</span> <span class="n">value</span>
     
     <span class="k">def</span> <span class="nf">set_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">status</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_status_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">status</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;status&#39;</span><span class="p">,</span> <span class="n">map_cl_status_code</span><span class="p">[</span><span class="n">status</span><span class="p">])</span>
         
-    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">set_call_end_time_by_id</span><span class="p">(</span><span class="n">env</span><span class="p">,</span> <span class="n">id_</span><span class="p">):</span>
-        <span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">env</span><span class="o">.</span><span class="n">now</span>
-    
     <span class="k">def</span> <span class="nf">set_call_end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">set_call_end_time_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;call_end_time&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="nf">get_mx_field</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">client_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">cl_columns_map</span><span class="p">[</span><span class="n">field</span><span class="p">]]</span>
 </pre></div>
 
 </div>
@@ -12174,6 +12192,7 @@ div#notebook {
         <span class="n">wd</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">op_mx</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">,</span> <span class="n">op_columns_map</span><span class="p">[</span><span class="s1">&#39;work_duration&#39;</span><span class="p">]]</span>
         <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">now</span><span class="o">&lt;</span><span class="n">swt</span><span class="o">+</span><span class="n">wd</span><span class="p">:</span>         
             <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">call_center</span><span class="o">.</span><span class="n">request_client</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">set_mx_field</span><span class="p">(</span><span class="s1">&#39;operator_id&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
             <span class="n">client</span><span class="o">.</span><span class="n">connect</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">1</span><span class="o">*</span><span class="mi">60</span><span class="p">)</span>
             <span class="n">client</span><span class="o">.</span><span class="n">disconnect</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
@@ -12250,13 +12269,13 @@ div#notebook {
 
  
  
-<div id="c97cf8d5-da2c-4cdc-93a9-29b1e897d70c"></div>
+<div id="a4c7d17b-9a62-4d26-87e2-933e2f6e29fb"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#c97cf8d5-da2c-4cdc-93a9-29b1e897d70c');
+var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "50f92ba548244419ae019540549a0afb", "version_major": 2, "version_minor": 0}
+{"model_id": "9c08683bf6794c81a95f469cd5d91263", "version_major": 2, "version_minor": 0}
 </script>
 </div>
 
@@ -12301,7 +12320,7 @@ var element = $('#c97cf8d5-da2c-4cdc-93a9-29b1e897d70c');
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(622, 11)
+<pre>(620, 17)
 </pre>
 </div>
 </div>
@@ -12332,88 +12351,124 @@ var element = $('#c97cf8d5-da2c-4cdc-93a9-29b1e897d70c');
     <tr style="text-align: right;">
       <th></th>
       <th>id</th>
-      <th>priority</th>
-      <th>type</th>
-      <th>status_code</th>
       <th>status</th>
-      <th>call_start_time</th>
-      <th>call_start_time_dt</th>
-      <th>call_end_time</th>
-      <th>call_end_time_dt</th>
-      <th>max_waiting_time</th>
+      <th>operator_id</th>
+      <th>type</th>
       <th>max_waiting_time_dt</th>
+      <th>call_start_time_dt</th>
+      <th>call_end_time_dt</th>
+      <th>call_duration_time_dt</th>
+      <th>block_start_time_dt</th>
+      <th>block_end_time_dt</th>
+      <th>block_duration_time_dt</th>
+      <th>queue_start_time_dt</th>
+      <th>queue_end_time_dt</th>
+      <th>queue_duration_time_dt</th>
+      <th>connect_start_time_dt</th>
+      <th>connect_end_time_dt</th>
+      <th>connect_duration_time_dt</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>3</td>
+      <td>drop_success</td>
+      <td>0.0</td>
       <td>regular</td>
-      <td>8</td>
-      <td>drop_from_queue</td>
-      <td>1</td>
-      <td>2018-01-01 07:00:01</td>
-      <td>721</td>
-      <td>2018-01-01 07:12:01</td>
-      <td>540</td>
       <td>00:09:00</td>
+      <td>2018-01-01 07:00:00</td>
+      <td>2018-01-01 07:01:00</td>
+      <td>00:01:00</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>2018-01-01 07:00:00</td>
+      <td>2018-01-01 07:00:00</td>
+      <td>00:00:00</td>
+      <td>2018-01-01 07:00:00</td>
+      <td>2018-01-01 07:01:00</td>
+      <td>00:01:00</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>3</td>
+      <td>drop_success</td>
+      <td>0.0</td>
       <td>regular</td>
-      <td>8</td>
-      <td>drop_from_queue</td>
-      <td>2</td>
-      <td>2018-01-01 07:00:02</td>
-      <td>730</td>
-      <td>2018-01-01 07:12:10</td>
-      <td>540</td>
       <td>00:09:00</td>
+      <td>2018-01-01 07:00:04</td>
+      <td>2018-01-01 07:02:00</td>
+      <td>00:01:56</td>
+      <td>2018-01-01 07:00:05</td>
+      <td>2018-01-01 07:00:12</td>
+      <td>00:00:07</td>
+      <td>2018-01-01 07:00:12</td>
+      <td>2018-01-01 07:01:00</td>
+      <td>00:00:48</td>
+      <td>2018-01-01 07:01:00</td>
+      <td>2018-01-01 07:02:00</td>
+      <td>00:01:00</td>
     </tr>
     <tr>
       <th>2</th>
       <td>2</td>
-      <td>3</td>
-      <td>regular</td>
-      <td>3</td>
       <td>no_lines</td>
-      <td>3</td>
-      <td>2018-01-01 07:00:03</td>
-      <td>-1</td>
-      <td>NaT</td>
-      <td>540</td>
+      <td>NaN</td>
+      <td>regular</td>
       <td>00:09:00</td>
+      <td>2018-01-01 07:00:09</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
     </tr>
     <tr>
       <th>3</th>
       <td>3</td>
-      <td>3</td>
-      <td>regular</td>
-      <td>3</td>
       <td>no_lines</td>
-      <td>6</td>
-      <td>2018-01-01 07:00:06</td>
-      <td>-1</td>
-      <td>NaT</td>
-      <td>540</td>
+      <td>NaN</td>
+      <td>regular</td>
       <td>00:09:00</td>
+      <td>2018-01-01 07:00:11</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
     </tr>
     <tr>
       <th>4</th>
       <td>4</td>
-      <td>3</td>
-      <td>regular</td>
-      <td>3</td>
       <td>no_lines</td>
-      <td>7</td>
-      <td>2018-01-01 07:00:07</td>
-      <td>-1</td>
-      <td>NaT</td>
-      <td>540</td>
+      <td>NaN</td>
+      <td>regular</td>
       <td>00:09:00</td>
+      <td>2018-01-01 07:00:12</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
+      <td>NaT</td>
     </tr>
   </tbody>
 </table>
@@ -12450,11 +12505,10 @@ var element = $('#c97cf8d5-da2c-4cdc-93a9-29b1e897d70c');
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>no_lines           601
-drop_success        10
-drop_from_queue      9
-in_queue             1
-connected            1
+<pre>no_lines        599
+drop_success     19
+in_queue          1
+connected         1
 Name: status, dtype: int64</pre>
 </div>
 
@@ -12488,7 +12542,7 @@ Name: status, dtype: int64</pre>
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(2, 9)
+<pre>(2, 5)
 </pre>
 </div>
 </div>
@@ -12519,13 +12573,9 @@ Name: status, dtype: int64</pre>
     <tr style="text-align: right;">
       <th></th>
       <th>id</th>
-      <th>priority</th>
       <th>type</th>
-      <th>start_work_time</th>
       <th>start_work_time_dt</th>
-      <th>end_work_time</th>
       <th>end_work_time_dt</th>
-      <th>work_duration</th>
       <th>work_duration_dt</th>
     </tr>
   </thead>
@@ -12533,25 +12583,17 @@ Name: status, dtype: int64</pre>
     <tr>
       <th>0</th>
       <td>0</td>
-      <td>3</td>
       <td>regular</td>
-      <td>0</td>
       <td>2018-01-01 07:00:00</td>
-      <td>600</td>
       <td>2018-01-01 07:10:00</td>
-      <td>600</td>
       <td>00:10:00</td>
     </tr>
     <tr>
       <th>1</th>
       <td>1</td>
-      <td>3</td>
       <td>regular</td>
-      <td>600</td>
       <td>2018-01-01 07:10:00</td>
-      <td>1200</td>
       <td>2018-01-01 07:20:00</td>
-      <td>600</td>
       <td>00:10:00</td>
     </tr>
   </tbody>

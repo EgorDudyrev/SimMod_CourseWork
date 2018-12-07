@@ -49,17 +49,24 @@ def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=10*6
 
 def get_client_ds(matrix, columns):
     client_ds = pd.DataFrame(matrix, columns=columns, dtype=np.int)
-    client_ds['status_code'] = client_ds['status']
+    client_ds = client_ds.replace(-1,np.nan)
     client_ds['status'] = client_ds['status'].transform(lambda x: map_code_cl_status[x])
     client_ds['type'] = client_ds['priority'].transform(lambda x: {1:'gold',2:'silver',3:'regular'}[x])
-    client_ds['call_start_time_dt'] = client_ds['call_start_time'].transform(lambda x: dt.timedelta(seconds=x))
-    client_ds['call_start_time_dt'] = client_ds['call_start_time_dt'] + dt.datetime(2018,1,1,7)
-    client_ds['call_end_time_dt'] = client_ds['call_end_time'].transform(lambda x: dt.timedelta(seconds=x) if x>=0 else None)
-    client_ds['call_end_time_dt'] = client_ds['call_end_time_dt'] + dt.datetime(2018,1,1,7)
+    client_ds = client_ds.drop('priority',axis=1)
     client_ds['max_waiting_time_dt'] = client_ds['max_waiting_time'].transform(lambda x: dt.timedelta(seconds=x))
-    client_ds = client_ds.reindex(columns=['id','priority','type', 'status_code','status',
-                           'call_start_time','call_start_time_dt','call_end_time', 'call_end_time_dt',
-                           'max_waiting_time', 'max_waiting_time_dt'])
+    client_ds = client_ds.drop('max_waiting_time',axis=1)
+    
+    for i in ['call','block','queue','connect']:
+        client_ds[f'{i}_duration_time'] = client_ds[f'{i}_end_time']-client_ds[f'{i}_start_time']
+    
+    for i in ['call', 'block', 'queue', 'connect']:
+        for j in ['start','end','duration']:
+            client_ds[f'{i}_{j}_time_dt'] = client_ds[f'{i}_{j}_time'].transform(
+                lambda x: dt.timedelta(seconds=x) if x>=0 else None)
+            if j!='duration':
+                client_ds[f'{i}_{j}_time_dt'] = client_ds[f'{i}_{j}_time_dt']+dt.datetime(2018,1,1,7)
+            client_ds = client_ds.drop(f'{i}_{j}_time', axis=1)
+    
     return client_ds
 
 
@@ -68,15 +75,16 @@ def get_client_ds(matrix, columns):
 
 def get_operator_ds(matrix, columns):
     operator_ds = pd.DataFrame(matrix, columns=columns, dtype=np.int)
+    operator_ds = operator_ds.replace(-1, np.nan)
     operator_ds['type'] = operator_ds['priority'].transform(lambda x: {1:'gold',2:'silver',3:'regular'}[x])
-    operator_ds['start_work_time_dt'] = operator_ds['start_work_time'].transform(lambda x: dt.timedelta(seconds=x))
-    operator_ds['start_work_time_dt'] = operator_ds['start_work_time_dt'] + dt.datetime(2018,1,1,7)
-    operator_ds['work_duration_dt'] = operator_ds['work_duration'].transform(lambda x: dt.timedelta(seconds=x))
     operator_ds['end_work_time'] = operator_ds['start_work_time']+operator_ds['work_duration']
-    operator_ds['end_work_time_dt'] = operator_ds['start_work_time_dt']+operator_ds['work_duration_dt']
-    operator_ds = operator_ds.reindex(columns=['id','priority','type', 
-                           'start_work_time','start_work_time_dt','end_work_time', 'end_work_time_dt',
-                           'work_duration', 'work_duration_dt'])
+    for i in ['start_work_time', 'end_work_time', 'work_duration']:
+            operator_ds[f'{i}_dt'] = operator_ds[i].transform(
+                lambda x: dt.timedelta(seconds=x) if x>=0 else None)
+            if 'duration' not in i:
+                operator_ds[f'{i}_dt'] = operator_ds[f'{i}_dt']+dt.datetime(2018,1,1,7)
+    
+    operator_ds = operator_ds.drop(['priority', 'start_work_time', 'work_duration', 'end_work_time'], axis=1)
     return operator_ds
 
 
@@ -95,7 +103,10 @@ map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
 # In[7]:
 
 
-cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status']
+cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status',
+             'block_start_time', 'block_end_time',
+             'queue_start_time', 'queue_end_time',
+             'connect_start_time', 'connect_end_time', 'operator_id']
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
@@ -149,7 +160,7 @@ class CallCenter(object):
 
     def request_line(self, client):
         cl_id = client.id_
-        cl_priority = self.env.client_mx[client.id_, cl_columns_map['priority']]
+        cl_priority =  client.get_mx_field('priority')
         n_lines_to_give = self.n_lines-self.n_vip_lines if cl_priority==3 else self.n_lines
         if self.lines.count<n_lines_to_give:
             req = self.lines.request()
@@ -168,7 +179,7 @@ class CallCenter(object):
     
     def put_to_queue(self, client):
         cl_id = client.id_
-        cl_priority = self.env.client_mx[client.id_, cl_columns_map['priority']]
+        cl_priority = client.get_mx_field('priority')
         if cl_priority == 3:
             yield self.queue.put(sp.PriorityItem(cl_priority, client))
             client.put_in_queue.succeed()
@@ -185,15 +196,17 @@ class CallCenter(object):
         else:
             client.block.succeed()
             yield self.env.timeout(10)
-            yield self.queue.put(sp.PriorityItem(cl_priority, client))
-            client.put_in_queue.succeed()
+            dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=6*60))
+            if not dropped:
+                yield self.queue.put(sp.PriorityItem(cl_priority, client))
+                client.put_in_queue.succeed()
             
     def request_client(self, operator):
         op_id = operator.id_
         op_priority = self.env.op_mx[operator.id_, op_columns_map['priority']]
         client = yield self.queue.get(lambda x: x.priority>=op_priority)
         client = client.item
-        return client    
+        return client
     
     class NoLinesAvailable(sp.exceptions.SimPyException):
         pass
@@ -227,26 +240,30 @@ class Client(object):
     
     def drop_call(self, status):
         yield self.env.process(self.env.call_center.release_line(self))
-        self.env.client_mx[self.id_, cl_columns_map['call_end_time']] = self.env.now
+        self.set_mx_field('call_end_time', self.env.now)
         self.set_status(status)
     
     def wait_in_queue(self):
         while True:
             yield self.put_in_queue
             self.set_status('in_queue')
+            self.set_mx_field('queue_start_time', self.env.now)
             try:
                 yield self.env.timeout(VERY_LONG_TIME)
                 yield self.env.process(self.drop_call('drop_from_queue'))
             except sp.Interrupt: 
                 pass
+            self.set_mx_field('queue_end_time', self.env.now)
             self.put_in_queue = self.env.event()
         
     def wait_in_block(self):
         yield self.block
         self.set_status('blocked')
+        self.set_mx_field('block_start_time', self.env.now)
         
     def decide_to_drop_unblock(self, time_to_wait):
-        mwt = self.env.client_mx[self.id_, cl_columns_map['max_waiting_time']]
+        mwt = self.get_mx_field('max_waiting_time')
+        self.set_mx_field('block_end_time', self.env.now)
         if time_to_wait > mwt:
             yield self.env.process(self.drop_call('drop_on_unblock'))
             return True
@@ -254,23 +271,24 @@ class Client(object):
         
     def talk_with_operator(self):
         yield self.connect
+        self.waiting_queue.interrupt()
         self.set_status('connected')
+        self.set_mx_field('connect_start_time', self.env.now)
         yield self.disconnect
+        self.set_mx_field('connect_end_time', self.env.now)
         yield self.env.process(self.drop_call('drop_success'))
-        
-    @staticmethod
-    def set_status_by_id(env, id_, status):
-        env.client_mx[id_, cl_columns_map['status']] = map_cl_status_code[status]
+    
+    def set_mx_field(self, field, value):
+        self.env.client_mx[self.id_, cl_columns_map[field]] = value
     
     def set_status(self, status):
-        self.set_status_by_id(self.env, self.id_, status)
+        self.set_mx_field('status', map_cl_status_code[status])
         
-    @staticmethod
-    def set_call_end_time_by_id(env, id_):
-        env.client_mx[id_, cl_columns_map['call_end_time']] = env.now
-    
     def set_call_end_time(self):
-        self.set_call_end_time_by_id(self.env, self.id_)
+        self.set_mx_field('call_end_time', self.env.now)
+    
+    def get_mx_field(self, field):
+        return self.env.client_mx[self.id_, cl_columns_map[field]]
 
 
 # In[13]:
@@ -293,6 +311,7 @@ class Operator(object):
         wd = self.env.op_mx[self.id_, op_columns_map['work_duration']]
         while self.env.now<swt+wd:         
             client = yield self.env.process(self.env.call_center.request_client(self))
+            client.set_mx_field('operator_id', self.id_)
             client.connect.succeed()
             yield self.env.timeout(1*60)
             client.disconnect.succeed()
