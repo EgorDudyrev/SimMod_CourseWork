@@ -178,7 +178,7 @@ class CallCenter(object):
                 client.waiting_queue.interrupt()
                 client.block.succeed()
                 yield self.env.timeout(7)
-                dropped = yield self.env.process(client.decide_to_drop_unblock(6*60))
+                dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=6*60))
                 if not dropped:
                     yield self.queue.put(sp.PriorityItem(cl_priority, client))
                     client.put_in_queue.succeed()
@@ -187,6 +187,13 @@ class CallCenter(object):
             yield self.env.timeout(10)
             yield self.queue.put(sp.PriorityItem(cl_priority, client))
             client.put_in_queue.succeed()
+            
+    def request_client(self, operator):
+        op_id = operator.id_
+        op_priority = self.env.op_mx[operator.id_, op_columns_map['priority']]
+        client = yield self.queue.get(lambda x: x.priority>=op_priority)
+        client = client.item
+        return client    
     
     class NoLinesAvailable(sp.exceptions.SimPyException):
         pass
@@ -249,8 +256,7 @@ class Client(object):
         yield self.connect
         self.set_status('connected')
         yield self.disconnect
-        yield self.env.process(cc.release_line(self.req))
-        self.set_status('drop_success')
+        yield self.env.process(self.drop_call('drop_success'))
         
     @staticmethod
     def set_status_by_id(env, id_, status):
@@ -274,13 +280,22 @@ class Operator(object):
     def __init__(self, env, id_):
         self.env = env
         self.id_ = id_
-        self.action = env.process(self.run())
         
-    def run(self):
+        self.action = env.process(self.start_working())
+        
+    def start_working(self):
         swt = self.env.op_mx[self.id_, op_columns_map['start_work_time']]
         yield self.env.timeout(swt)
+        yield self.env.process(self.working())
+        
+    def working(self):
+        swt = self.env.op_mx[self.id_, op_columns_map['start_work_time']]
         wd = self.env.op_mx[self.id_, op_columns_map['work_duration']]
-        yield self.env.timeout(wd)
+        while self.env.now<swt+wd:         
+            client = yield self.env.process(self.env.call_center.request_client(self))
+            client.connect.succeed()
+            yield self.env.timeout(1*60)
+            client.disconnect.succeed()
 
 
 # In[14]:
@@ -326,11 +341,13 @@ client_ds.head()
 # In[18]:
 
 
-env.call_center.queue.items
+client_ds['status'].value_counts()
 
 
 # In[19]:
 
 
-client_ds['status'].value_counts()
+op_ds = get_operator_ds(env.op_mx, op_columns)
+print(op_ds.shape)
+op_ds.head()
 
