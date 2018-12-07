@@ -184,22 +184,13 @@ class CallCenter(object):
             yield self.queue.put(sp.PriorityItem(cl_priority, client))
             client.put_in_queue.succeed()
             yield self.env.timeout(1)
+            # Если клиент всё ещё в очереди, то оцениваем время его ожидания
             if client in [x.item for x in self.queue.items]:
                 yield self.queue.get(lambda x: x.item.id_==client.id_)
                 client.waiting_queue.interrupt()
-                client.block.succeed()
-                yield self.env.timeout(7)
-                dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=6*60))
-                if not dropped:
-                    yield self.queue.put(sp.PriorityItem(cl_priority, client))
-                    client.put_in_queue.succeed()
+                self.env.process(self.block_client(client))
         else:
-            client.block.succeed()
-            yield self.env.timeout(10)
-            dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=6*60))
-            if not dropped:
-                yield self.queue.put(sp.PriorityItem(cl_priority, client))
-                client.put_in_queue.succeed()
+            self.env.process(self.block_client(client))
             
     def request_client(self, operator):
         op_id = operator.id_
@@ -207,6 +198,20 @@ class CallCenter(object):
         client = yield self.queue.get(lambda x: x.priority>=op_priority)
         client = client.item
         return client
+    
+    def block_client(self, client):
+        client.block.succeed()
+        cl_priority = client.get_mx_field('priority')
+        block_time = 7 if cl_priority == 3 else 10 
+        yield self.env.timeout(block_time)
+        ttw = self.estimate_wait_time(client)
+        dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=ttw))
+        if not dropped:
+            yield self.queue.put(sp.PriorityItem(cl_priority, client))
+            client.put_in_queue.succeed()
+    
+    def estimate_wait_time(self, client):
+        return 0  # For testing purposes only
     
     class NoLinesAvailable(sp.exceptions.SimPyException):
         pass

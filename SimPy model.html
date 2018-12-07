@@ -12051,22 +12051,13 @@ div#notebook {
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
             <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
             <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="c1"># Если клиент всё ещё в очереди, то оцениваем время его ожидания</span>
             <span class="k">if</span> <span class="n">client</span> <span class="ow">in</span> <span class="p">[</span><span class="n">x</span><span class="o">.</span><span class="n">item</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">items</span><span class="p">]:</span>
                 <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">item</span><span class="o">.</span><span class="n">id_</span><span class="o">==</span><span class="n">client</span><span class="o">.</span><span class="n">id_</span><span class="p">)</span>
                 <span class="n">client</span><span class="o">.</span><span class="n">waiting_queue</span><span class="o">.</span><span class="n">interrupt</span><span class="p">()</span>
-                <span class="n">client</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
-                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
-                <span class="n">dropped</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">decide_to_drop_unblock</span><span class="p">(</span><span class="n">time_to_wait</span><span class="o">=</span><span class="mi">6</span><span class="o">*</span><span class="mi">60</span><span class="p">))</span>
-                <span class="k">if</span> <span class="ow">not</span> <span class="n">dropped</span><span class="p">:</span>
-                    <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
-                    <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_client</span><span class="p">(</span><span class="n">client</span><span class="p">))</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">client</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
-            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
-            <span class="n">dropped</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">decide_to_drop_unblock</span><span class="p">(</span><span class="n">time_to_wait</span><span class="o">=</span><span class="mi">6</span><span class="o">*</span><span class="mi">60</span><span class="p">))</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">dropped</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
-                <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">block_client</span><span class="p">(</span><span class="n">client</span><span class="p">))</span>
             
     <span class="k">def</span> <span class="nf">request_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">):</span>
         <span class="n">op_id</span> <span class="o">=</span> <span class="n">operator</span><span class="o">.</span><span class="n">id_</span>
@@ -12074,6 +12065,20 @@ div#notebook {
         <span class="n">client</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">priority</span><span class="o">&gt;=</span><span class="n">op_priority</span><span class="p">)</span>
         <span class="n">client</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">item</span>
         <span class="k">return</span> <span class="n">client</span>
+    
+    <span class="k">def</span> <span class="nf">block_client</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="n">client</span><span class="o">.</span><span class="n">block</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+        <span class="n">cl_priority</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_mx_field</span><span class="p">(</span><span class="s1">&#39;priority&#39;</span><span class="p">)</span>
+        <span class="n">block_time</span> <span class="o">=</span> <span class="mi">7</span> <span class="k">if</span> <span class="n">cl_priority</span> <span class="o">==</span> <span class="mi">3</span> <span class="k">else</span> <span class="mi">10</span> 
+        <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">timeout</span><span class="p">(</span><span class="n">block_time</span><span class="p">)</span>
+        <span class="n">ttw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_wait_time</span><span class="p">(</span><span class="n">client</span><span class="p">)</span>
+        <span class="n">dropped</span> <span class="o">=</span> <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">process</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">decide_to_drop_unblock</span><span class="p">(</span><span class="n">time_to_wait</span><span class="o">=</span><span class="n">ttw</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">dropped</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">queue</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">PriorityItem</span><span class="p">(</span><span class="n">cl_priority</span><span class="p">,</span> <span class="n">client</span><span class="p">))</span>
+            <span class="n">client</span><span class="o">.</span><span class="n">put_in_queue</span><span class="o">.</span><span class="n">succeed</span><span class="p">()</span>
+    
+    <span class="k">def</span> <span class="nf">estimate_wait_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mi">0</span>  <span class="c1"># For testing purposes only</span>
     
     <span class="k">class</span> <span class="nc">NoLinesAvailable</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">exceptions</span><span class="o">.</span><span class="n">SimPyException</span><span class="p">):</span>
         <span class="k">pass</span>
@@ -12269,13 +12274,13 @@ div#notebook {
 
  
  
-<div id="a4c7d17b-9a62-4d26-87e2-933e2f6e29fb"></div>
+<div id="32317886-b24f-4435-b756-864bcdcddf78"></div>
 <div class="output_subarea output_widget_view ">
 <script type="text/javascript">
-var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
+var element = $('#32317886-b24f-4435-b756-864bcdcddf78');
 </script>
 <script type="application/vnd.jupyter.widget-view+json">
-{"model_id": "9c08683bf6794c81a95f469cd5d91263", "version_major": 2, "version_minor": 0}
+{"model_id": "b58586f9d59e4ff2b63bbe3bf384d2c9", "version_major": 2, "version_minor": 0}
 </script>
 </div>
 
@@ -12320,7 +12325,7 @@ var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
 
 
 <div class="output_subarea output_stream output_stdout output_text">
-<pre>(620, 17)
+<pre>(606, 17)
 </pre>
 </div>
 </div>
@@ -12397,15 +12402,15 @@ var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
       <td>0.0</td>
       <td>regular</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:04</td>
+      <td>2018-01-01 07:00:03</td>
       <td>2018-01-01 07:02:00</td>
-      <td>00:01:56</td>
-      <td>2018-01-01 07:00:05</td>
-      <td>2018-01-01 07:00:12</td>
+      <td>00:01:57</td>
+      <td>2018-01-01 07:00:04</td>
+      <td>2018-01-01 07:00:11</td>
       <td>00:00:07</td>
-      <td>2018-01-01 07:00:12</td>
+      <td>2018-01-01 07:00:11</td>
       <td>2018-01-01 07:01:00</td>
-      <td>00:00:48</td>
+      <td>00:00:49</td>
       <td>2018-01-01 07:01:00</td>
       <td>2018-01-01 07:02:00</td>
       <td>00:01:00</td>
@@ -12417,7 +12422,7 @@ var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
       <td>NaN</td>
       <td>regular</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:09</td>
+      <td>2018-01-01 07:00:04</td>
       <td>NaT</td>
       <td>NaT</td>
       <td>NaT</td>
@@ -12437,7 +12442,7 @@ var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
       <td>NaN</td>
       <td>regular</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:11</td>
+      <td>2018-01-01 07:00:05</td>
       <td>NaT</td>
       <td>NaT</td>
       <td>NaT</td>
@@ -12457,7 +12462,7 @@ var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
       <td>NaN</td>
       <td>regular</td>
       <td>00:09:00</td>
-      <td>2018-01-01 07:00:12</td>
+      <td>2018-01-01 07:00:07</td>
       <td>NaT</td>
       <td>NaT</td>
       <td>NaT</td>
@@ -12505,10 +12510,10 @@ var element = $('#a4c7d17b-9a62-4d26-87e2-933e2f6e29fb');
 
 
 <div class="output_text output_subarea output_execute_result">
-<pre>no_lines        599
+<pre>no_lines        585
 drop_success     19
-in_queue          1
 connected         1
+in_queue          1
 Name: status, dtype: int64</pre>
 </div>
 
