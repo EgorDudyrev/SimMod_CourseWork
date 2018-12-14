@@ -31,7 +31,8 @@ def add_client_to_matrix(matrix, priority, call_start_time):
     data[cl_columns_map['id']] = id_
     data[cl_columns_map['priority']] = priority
     data[cl_columns_map['call_start_time']] = call_start_time
-    data[cl_columns_map['max_waiting_time']] = dt.timedelta(minutes=9).seconds #CHANGE TO RANDOM VALUE
+    mwt = np.random.triangular(12, np.mean([12,30]), 30) if priority==3 else np.random.triangular(8, np.mean([8,17]), 17)
+    data[cl_columns_map['max_waiting_time']] = dt.timedelta(minutes=mwt).seconds
     data[cl_columns_map['status']] = map_cl_status_code['generated']
     data[cl_columns_map['call_type']] = np.random.choice(calls_type_distr.index, p=calls_type_distr['p'])
     return id_, np.append(matrix, [data], axis=0)
@@ -352,7 +353,7 @@ class CallCenter(object):
         if cl_priority == 3:
             block_time = 7
         else:
-            block_time = 10  #CHANGE TO RANDOM VALUE
+            block_time = int(round(np.random.uniform(7,16),0))
         yield self.env.timeout(block_time)
         ttw = self.estimate_wait_time(client)
         dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=ttw))
@@ -419,8 +420,10 @@ class Client(object):
             self.set_status('in_queue')
             self.set_mx_field('queue_start_time', self.env.now)
             try:
-                max_queue_wait_time = dt.timedelta(minutes=10).seconds #CHANGE TO TASK GIVEN LIMITATIONS
-                yield self.env.timeout(max_queue_wait_time)
+                prio = self.get_mx_field('priority')
+                mqwt = {1:3, 2:6, 3:30}[prio]
+                mqwt = dt.timedelta(minutes=mqwt).seconds #CHANGE TO WHAT? TASK VALUES ARE FOR OTHER MEASURES
+                yield self.env.timeout(mqwt)
                 yield self.env.process(self.drop_call('drop_from_queue'))
             except sp.Interrupt: 
                 pass
