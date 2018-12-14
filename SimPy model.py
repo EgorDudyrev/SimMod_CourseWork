@@ -8,6 +8,7 @@ import simpy as sp
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 import datetime as dt
 
@@ -39,7 +40,7 @@ def add_client_to_matrix(matrix, priority, call_start_time):
 # In[3]:
 
 
-def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=10*60):
+def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=dt.timedelta(hours=8).seconds):
     """
     Call manually when configuring operators shedule
     """
@@ -47,8 +48,9 @@ def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=10*6
     id_ = len(matrix)
     data[op_columns_map['id']] = id_
     data[op_columns_map['priority']] = priority
-    data[op_columns_map['start_work_time']] = start_work_time
+    data[op_columns_map['start_work_time']] = (start_work_time-dt.timedelta(hours=7)).seconds
     data[op_columns_map['work_duration']] = work_duration
+    data[op_columns_map['efficiency']] = {1:12, 2:5, 3:0}[priority]
     return id_, np.append(matrix, [data], axis=0)
 
 
@@ -92,12 +94,13 @@ def get_operator_ds(env):
     operator_ds = pd.DataFrame(matrix, columns=op_columns, dtype=np.int)
     operator_ds = operator_ds.replace(-1, np.nan)
     operator_ds['type'] = operator_ds['priority'].transform(lambda x: {1:'gold',2:'silver',3:'regular'}[x])
+    operator_ds['efficiency'] = operator_ds['efficiency']/100
     operator_ds['end_work_time'] = operator_ds['start_work_time']+operator_ds['work_duration']
     for i in ['start_work_time', 'end_work_time', 'work_duration']:
             operator_ds[f'{i}_dt'] = operator_ds[i].transform(
                 lambda x: dt.timedelta(seconds=x) if x>=0 else None)
             if 'duration' not in i:
-                operator_ds[f'{i}_dt'] = operator_ds[f'{i}_dt']+dt.datetime(2018,1,1,7)
+                operator_ds[f'{i}_dt'] = operator_ds[f'{i}_dt']+dt.timedelta(hours=7)#dt.datetime(2018,1,1,7)
     
     operator_ds = operator_ds.drop(['priority', 'start_work_time', 'work_duration', 'end_work_time'], axis=1)
     return operator_ds
@@ -139,7 +142,9 @@ def plot_client_calls_distribution(calls_distribution, figsize=(15,5), colors=['
 
 def plot_call_types_distribution(calls_type_distr, figsize=(8,4)):
     plt.figure(figsize=figsize)
-    plt.bar(calls_type_distr.index-0.2, client_ds.groupby('call_type')['id'].count()/len(client_ds), label='empirical', width=0.4)
+    s = client_ds.groupby('call_type')['id'].count()/len(client_ds)
+    s = s.reindex(calls_type_distr['type'])
+    plt.bar(calls_type_distr.index-0.2, s, label='empirical', width=0.4)
     plt.bar(calls_type_distr.index+0.2, calls_type_distr['p'], label='theoretical', width=0.4)
     plt.title('Call types distribution')
     plt.xticks(calls_type_distr.index, calls_type_distr['type'])
@@ -149,9 +154,47 @@ def plot_call_types_distribution(calls_type_distr, figsize=(8,4)):
     plt.show()
 
 
+# In[9]:
+
+
+def plot_connection_duration_distr(client_ds, figsize=(15,15)):
+    ds = client_ds[['call_type', 'connect_duration_time_dt', 'operator_id']].dropna()
+    ds = pd.merge(ds, op_ds, left_on='operator_id', right_on='id'
+                  ).drop(['id','operator_id'],axis=1).rename(columns={'type':'operator_type'})
+    ds['connect_duration_time_dt'] = [x.seconds for x in ds['connect_duration_time_dt']]
+    
+    plt.figure(figsize=figsize)
+    for op_type_id in range(3):
+        for call_type_id in range(3):
+            plt.subplot(3,3,op_type_id*3+call_type_id+1)
+            call_type = calls_type_distr.at[call_type_id, 'type']
+            op_type = {idx:t for idx,t in enumerate(['gold','silver','regular'])}[op_type_id]
+            plt.title(call_type)
+            plt.ylabel(op_type)
+            cds = ds[(ds['call_type']==call_type)&(ds['operator_type']==op_type)]
+            sns.distplot(cds['connect_duration_time_dt'],
+                         label='empirical')
+            stime, etime = calls_type_distr.loc[call_type_id, ['serv_time', 'extra_time']]
+            #stime = np.array(stime)+etime[0] #if etime is normal
+            stime = np.array(stime)+(etime[0]+etime[1])/2 #if etime is kind of triangular
+            op_eff = cds['efficiency'].values[0]
+            stime = stime*(1-op_eff)
+            h = 2/(stime[2]-stime[0])
+            plt.plot(stime, [0,h,0], label='theoretical')
+            plt.ylim(0, h*1.2)
+            plt.xlabel('connection duration (sec)')
+            
+            plt.text(cds['connect_duration_time_dt'].max()*0.85 ,h,'Calls amount: {}'.format(len(cds)))
+    plt.figlegend()
+    plt.suptitle('Connection duration distributions', size=18)
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.92)
+    plt.show()
+
+
 # # Data preparation
 
-# In[9]:
+# In[10]:
 
 
 cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
@@ -161,7 +204,7 @@ map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
 map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
 
 
-# In[10]:
+# In[11]:
 
 
 cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status', 'call_type',
@@ -171,18 +214,23 @@ cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_tim
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
-# In[11]:
+# In[12]:
 
 
-op_columns = ['id', 'priority', 'start_work_time', 'work_duration']
+op_columns = ['id', 'priority', 'efficiency', 'start_work_time', 'work_duration']
 op_columns_map = {k:idx for idx,k in enumerate(op_columns)}
 op_mx = np.empty([0,len(op_columns)], dtype=np.int)
-for p, swt in [(3, dt.timedelta(seconds=0).seconds),
-               (3, dt.timedelta(minutes=10).seconds)]:
-    id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
+for i in range(10):
+    for p, swt in [(3, dt.timedelta(hours=7)),
+                   (3, dt.timedelta(hours=11)),
+                   (2, dt.timedelta(hours=7)),
+                   (2, dt.timedelta(hours=11)),
+                   (1, dt.timedelta(hours=7)),
+                   (1, dt.timedelta(hours=11))]:
+        id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
 
 
-# In[12]:
+# In[13]:
 
 
 call_frequency_ds = pd.DataFrame()
@@ -196,17 +244,21 @@ call_frequency_ds = call_frequency_ds.reindex(columns=['gold_clients', 'silver_c
 call_frequency_ds
 
 
-# In[13]:
+# In[14]:
 
 
-calls_type_distr = pd.DataFrame([['ask', 'Вопрос', 0.16], ['book', 'Бронь', 0.76], ['rebook', 'Перебронь', 0.08]],
-                                columns=['type', 'type_rus', 'p'])
+calls_type_distr = pd.DataFrame([['info', 'Информация', 0.16, (1.2, 2.05, 3.75), (0.05, 0.1)],
+                                 ['book', 'Бронь', 0.76, (2.25, 2.95, 8.6), (0.5, 0.8)],
+                                 ['rebook', 'Перебронь', 0.08, (1.2, 1.9, 5.8), (0.4, 0.6)]],
+                                columns=['type', 'type_rus', 'p', 'serv_time', 'extra_time'])
+calls_type_distr['serv_time'] = [[dt.timedelta(minutes=y).seconds for y in x] for x in calls_type_distr['serv_time']]
+calls_type_distr['extra_time'] = [[dt.timedelta(minutes=y).seconds for y in x] for x in calls_type_distr['extra_time']]
 calls_type_distr
 
 
 # # Testing model
 
-# In[14]:
+# In[15]:
 
 
 class Queue(sp.PriorityStore):
@@ -228,7 +280,7 @@ class Queue(sp.PriorityStore):
         return True
 
 
-# In[15]:
+# In[16]:
 
 
 class CallCenter(object):
@@ -321,7 +373,7 @@ class CallCenter(object):
         pass
 
 
-# In[16]:
+# In[17]:
 
 
 class Client(object):
@@ -431,7 +483,7 @@ class Client(object):
         return self.env.client_mx[self.id_, cl_columns_map[field]]
 
 
-# In[17]:
+# In[18]:
 
 
 class Operator(object):
@@ -452,7 +504,15 @@ class Operator(object):
             client = yield self.env.process(self.env.call_center.request_client(self))
             client.set_mx_field('operator_id', self.id_)
             client.connect.succeed()
-            yield self.env.timeout(dt.timedelta(minutes=1).seconds) #CHANGE TO RANDOM VALUES
+            call_t = client.get_mx_field('call_type')
+            serv_t, extr_t = calls_type_distr.loc[call_t, ['serv_time','extra_time']]
+            serv_t = np.random.triangular(*serv_t)
+            #extr_t = max(np.random.normal(*extr_t), 0) #dist should be normal but values are strange
+            extr_t = np.random.triangular(extr_t[0], (extr_t[0]+extr_t[1])/2, extr_t[1])
+            total_t = serv_t+extr_t
+            efficiency = self.get_mx_field('efficiency')
+            total_t = int(round(total_t*(1-efficiency/100),0))
+            yield self.env.timeout(total_t)
             client.disconnect.succeed()
             
     def get_mx_field(self, field):
@@ -462,13 +522,12 @@ class Operator(object):
         return self.env.op_mx[self.id_, op_columns_map[field]]
 
 
-# In[18]:
+# In[19]:
 
 
 def client_generator(env):
     while True:
         for cl_priority in range(1,4):
-            p = 0.5  #CHANGE_TO_TASK_VALUE
             p = call_frequency_ds.iat[env.now//3600, cl_priority-1]/3600
             if np.random.rand()<p:
                 id_, env.client_mx = add_client_to_matrix(env.client_mx, cl_priority, env.now)
@@ -476,7 +535,7 @@ def client_generator(env):
         yield env.timeout(1)
 
 
-# In[19]:
+# In[20]:
 
 
 def init_env():
@@ -489,7 +548,7 @@ def init_env():
     return env
 
 
-# In[20]:
+# In[21]:
 
 
 env = init_env()
@@ -497,7 +556,7 @@ for i in tqdm_notebook(range(dt.timedelta(hours=12, minutes=0, seconds=0).second
     env.run(until=i+1)
 
 
-# In[21]:
+# In[22]:
 
 
 client_ds = get_client_ds(env)
@@ -505,7 +564,7 @@ print(client_ds.shape)
 client_ds.head()
 
 
-# In[22]:
+# In[23]:
 
 
 op_ds = get_operator_ds(env)
@@ -513,8 +572,14 @@ print(op_ds.shape)
 op_ds.head()
 
 
-# In[23]:
+# In[24]:
 
 
 plot_call_types_distribution(calls_type_distr)
+
+
+# In[25]:
+
+
+plot_connection_duration_distr(client_ds)
 
