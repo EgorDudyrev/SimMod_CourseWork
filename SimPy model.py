@@ -32,6 +32,7 @@ def add_client_to_matrix(matrix, priority, call_start_time):
     data[cl_columns_map['call_start_time']] = call_start_time
     data[cl_columns_map['max_waiting_time']] = dt.timedelta(minutes=9).seconds #CHANGE TO RANDOM VALUE
     data[cl_columns_map['status']] = map_cl_status_code['generated']
+    data[cl_columns_map['call_type']] = np.random.choice(calls_type_distr.index, p=calls_type_distr['p'])
     return id_, np.append(matrix, [data], axis=0)
 
 
@@ -63,6 +64,7 @@ def get_client_ds(env):
     client_ds = client_ds.replace(-1,np.nan)
     client_ds['status'] = client_ds['status'].transform(lambda x: map_code_cl_status[x])
     client_ds['type'] = client_ds['priority'].transform(lambda x: {1:'gold',2:'silver',3:'regular'}[x])
+    client_ds['call_type'] = client_ds['call_type'].transform(lambda x: calls_type_distr.at[x, 'type'])
     client_ds = client_ds.drop('priority',axis=1)
     client_ds['max_waiting_time_dt'] = client_ds['max_waiting_time'].transform(lambda x: dt.timedelta(seconds=x))
     client_ds = client_ds.drop('max_waiting_time',axis=1)
@@ -132,9 +134,24 @@ def plot_client_calls_distribution(calls_distribution, figsize=(15,5), colors=['
     plt.show()
 
 
+# In[8]:
+
+
+def plot_call_types_distribution(calls_type_distr, figsize=(8,4)):
+    plt.figure(figsize=figsize)
+    plt.bar(calls_type_distr.index-0.2, client_ds.groupby('call_type')['id'].count()/len(client_ds), label='empirical', width=0.4)
+    plt.bar(calls_type_distr.index+0.2, calls_type_distr['p'], label='theoretical', width=0.4)
+    plt.title('Call types distribution')
+    plt.xticks(calls_type_distr.index, calls_type_distr['type'])
+    plt.ylim(0,1)
+    plt.ylabel('probability')
+    plt.legend()
+    plt.show()
+
+
 # # Data preparation
 
-# In[8]:
+# In[9]:
 
 
 cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
@@ -144,17 +161,17 @@ map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
 map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
 
 
-# In[9]:
+# In[10]:
 
 
-cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status',
+cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status', 'call_type',
              'block_start_time', 'block_end_time',
              'queue_start_time', 'queue_end_time',
              'connect_start_time', 'connect_end_time', 'operator_id']
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
-# In[10]:
+# In[11]:
 
 
 op_columns = ['id', 'priority', 'start_work_time', 'work_duration']
@@ -165,7 +182,7 @@ for p, swt in [(3, dt.timedelta(seconds=0).seconds),
     id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
 
 
-# In[11]:
+# In[12]:
 
 
 call_frequency_ds = pd.DataFrame()
@@ -179,9 +196,17 @@ call_frequency_ds = call_frequency_ds.reindex(columns=['gold_clients', 'silver_c
 call_frequency_ds
 
 
+# In[13]:
+
+
+calls_type_distr = pd.DataFrame([['ask', 'Вопрос', 0.16], ['book', 'Бронь', 0.76], ['rebook', 'Перебронь', 0.08]],
+                                columns=['type', 'type_rus', 'p'])
+calls_type_distr
+
+
 # # Testing model
 
-# In[12]:
+# In[14]:
 
 
 class Queue(sp.PriorityStore):
@@ -203,7 +228,7 @@ class Queue(sp.PriorityStore):
         return True
 
 
-# In[13]:
+# In[15]:
 
 
 class CallCenter(object):
@@ -296,7 +321,7 @@ class CallCenter(object):
         pass
 
 
-# In[14]:
+# In[16]:
 
 
 class Client(object):
@@ -406,7 +431,7 @@ class Client(object):
         return self.env.client_mx[self.id_, cl_columns_map[field]]
 
 
-# In[15]:
+# In[17]:
 
 
 class Operator(object):
@@ -437,7 +462,7 @@ class Operator(object):
         return self.env.op_mx[self.id_, op_columns_map[field]]
 
 
-# In[16]:
+# In[18]:
 
 
 def client_generator(env):
@@ -451,7 +476,7 @@ def client_generator(env):
         yield env.timeout(1)
 
 
-# In[17]:
+# In[19]:
 
 
 def init_env():
@@ -464,7 +489,7 @@ def init_env():
     return env
 
 
-# In[18]:
+# In[20]:
 
 
 env = init_env()
@@ -472,7 +497,7 @@ for i in tqdm_notebook(range(dt.timedelta(hours=12, minutes=0, seconds=0).second
     env.run(until=i+1)
 
 
-# In[19]:
+# In[21]:
 
 
 client_ds = get_client_ds(env)
@@ -480,7 +505,7 @@ print(client_ds.shape)
 client_ds.head()
 
 
-# In[20]:
+# In[22]:
 
 
 op_ds = get_operator_ds(env)
@@ -488,8 +513,8 @@ print(op_ds.shape)
 op_ds.head()
 
 
-# In[21]:
+# In[23]:
 
 
-plot_client_calls_distribution(get_client_calls_distribution(client_ds))
+plot_call_types_distribution(calls_type_distr)
 
