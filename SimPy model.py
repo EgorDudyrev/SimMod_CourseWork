@@ -7,6 +7,7 @@
 import simpy as sp
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
 
 import datetime as dt
 
@@ -77,6 +78,7 @@ def get_client_ds(env):
                 client_ds[f'{i}_{j}_time_dt'] = client_ds[f'{i}_{j}_time_dt']+dt.datetime(2018,1,1,7)
             client_ds = client_ds.drop(f'{i}_{j}_time', axis=1)
     
+    client_ds['hour'] = [x.hour for x in client_ds['call_start_time_dt']]
     return client_ds
 
 
@@ -99,9 +101,40 @@ def get_operator_ds(env):
     return operator_ds
 
 
+# In[6]:
+
+
+def get_client_calls_distribution(client_ds):
+    call_numbers = client_ds.groupby(['type', 'hour'])['id'].count().to_frame()
+    call_numbers['type'] = [x[0] for x in call_numbers.index.values]
+    call_numbers['hour'] = [x[1] for x in call_numbers.index.values]
+    call_numbers.index = range(len(call_numbers))
+    call_numbers = call_numbers.pivot_table(columns=['type'], index=['hour'], values='id')
+    call_numbers = call_numbers.reindex(columns=['gold','silver','regular'])
+    return call_numbers
+
+
+# In[7]:
+
+
+def plot_client_calls_distribution(calls_distribution, figsize=(15,5), colors=['gold','silver','black']):
+    plt.figure(figsize=figsize)
+    for idx, f in enumerate(calls_distribution.columns):
+        label = {0:'gold',1:'silver',2:'ordinary'}[idx]+' empirical'
+        plt.plot(calls_distribution[f]/3600, '-', label=label, color=colors[idx])
+    for idx, f in enumerate(call_frequency_ds.columns):
+        label = {0:'gold',1:'silver',2:'ordinary'}[idx]+' theoretical'
+        plt.plot(call_frequency_ds[f]/3600, '--', label=label, color=colors[idx])
+    plt.legend()
+    plt.title('Client calls distribution')
+    plt.ylabel('probability')
+    plt.xlabel('hour')
+    plt.show()
+
+
 # # Data preparation
 
-# In[6]:
+# In[8]:
 
 
 cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
@@ -111,7 +144,7 @@ map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
 map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
 
 
-# In[7]:
+# In[9]:
 
 
 cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status',
@@ -121,7 +154,7 @@ cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_tim
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
-# In[8]:
+# In[10]:
 
 
 op_columns = ['id', 'priority', 'start_work_time', 'work_duration']
@@ -132,9 +165,23 @@ for p, swt in [(3, dt.timedelta(seconds=0).seconds),
     id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
 
 
+# In[11]:
+
+
+call_frequency_ds = pd.DataFrame()
+call_frequency_ds['time_range'] = range(7,19)
+call_frequency_ds['regular_clients'] = [87, 165, 236, 323, 277, 440, 269, 342, 175, 273, 115,  56]
+call_frequency_ds['vip_clients'] = [89, 243, 221, 180, 301, 490, 394, 347, 240, 269, 145,  69]
+call_frequency_ds['silver_clients'] = 0.68*call_frequency_ds['vip_clients']
+call_frequency_ds['gold_clients'] = call_frequency_ds['vip_clients']-call_frequency_ds['silver_clients']
+call_frequency_ds.index = call_frequency_ds['time_range']
+call_frequency_ds = call_frequency_ds.reindex(columns=['gold_clients', 'silver_clients', 'regular_clients'])
+call_frequency_ds
+
+
 # # Testing model
 
-# In[9]:
+# In[12]:
 
 
 class Queue(sp.PriorityStore):
@@ -156,7 +203,7 @@ class Queue(sp.PriorityStore):
         return True
 
 
-# In[10]:
+# In[13]:
 
 
 class CallCenter(object):
@@ -249,7 +296,7 @@ class CallCenter(object):
         pass
 
 
-# In[11]:
+# In[14]:
 
 
 class Client(object):
@@ -359,7 +406,7 @@ class Client(object):
         return self.env.client_mx[self.id_, cl_columns_map[field]]
 
 
-# In[12]:
+# In[15]:
 
 
 class Operator(object):
@@ -390,20 +437,21 @@ class Operator(object):
         return self.env.op_mx[self.id_, op_columns_map[field]]
 
 
-# In[13]:
+# In[16]:
 
 
 def client_generator(env):
     while True:
         for cl_priority in range(1,4):
             p = 0.5  #CHANGE_TO_TASK_VALUE
+            p = call_frequency_ds.iat[env.now//3600, cl_priority-1]/3600
             if np.random.rand()<p:
                 id_, env.client_mx = add_client_to_matrix(env.client_mx, cl_priority, env.now)
                 client = Client(env, id_)
         yield env.timeout(1)
 
 
-# In[14]:
+# In[17]:
 
 
 def init_env():
@@ -416,15 +464,15 @@ def init_env():
     return env
 
 
-# In[15]:
+# In[18]:
 
 
 env = init_env()
-for i in tqdm_notebook(range(dt.timedelta(hours=0, minutes=20, seconds=0).seconds)):
+for i in tqdm_notebook(range(dt.timedelta(hours=12, minutes=0, seconds=0).seconds)):
     env.run(until=i+1)
 
 
-# In[16]:
+# In[19]:
 
 
 client_ds = get_client_ds(env)
@@ -432,16 +480,16 @@ print(client_ds.shape)
 client_ds.head()
 
 
-# In[17]:
-
-
-client_ds['status'].value_counts()
-
-
-# In[18]:
+# In[20]:
 
 
 op_ds = get_operator_ds(env)
 print(op_ds.shape)
 op_ds.head()
+
+
+# In[21]:
+
+
+plot_client_calls_distribution(get_client_calls_distribution(client_ds))
 
