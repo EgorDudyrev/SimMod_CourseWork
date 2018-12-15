@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 import datetime as dt
+from itertools import product
 
 from tqdm import tqdm_notebook
 
@@ -41,6 +42,19 @@ def add_client_to_matrix(matrix, priority, call_start_time):
 # In[3]:
 
 
+def set_op_mx(op_time_ds):
+    op_mx = np.empty([0,len(op_columns)], dtype=np.int)
+    for hour, row in op_time_ds.iterrows():
+        for t,n in row.iteritems():
+            for i in range(n):
+                p = {'gold':1, 'silver':2, 'regular':3}[t]
+                id_, op_mx = add_operator_to_matrix(op_mx, p, dt.timedelta(hours=int(hour)))
+    return op_mx
+
+
+# In[4]:
+
+
 def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=dt.timedelta(hours=8).seconds):
     """
     Call manually when configuring operators shedule
@@ -55,7 +69,7 @@ def add_operator_to_matrix(matrix, priority, start_work_time, work_duration=dt.t
     return id_, np.append(matrix, [data], axis=0)
 
 
-# In[4]:
+# In[5]:
 
 
 def get_client_ds(env):
@@ -87,7 +101,7 @@ def get_client_ds(env):
     return client_ds
 
 
-# In[5]:
+# In[6]:
 
 
 def get_operator_ds(env):
@@ -107,7 +121,7 @@ def get_operator_ds(env):
     return operator_ds
 
 
-# In[6]:
+# In[7]:
 
 
 def get_client_calls_distribution(client_ds):
@@ -120,7 +134,7 @@ def get_client_calls_distribution(client_ds):
     return call_numbers
 
 
-# In[7]:
+# In[8]:
 
 
 def plot_client_calls_distribution(calls_distribution, figsize=(15,5), colors=['gold','silver','black']):
@@ -138,10 +152,10 @@ def plot_client_calls_distribution(calls_distribution, figsize=(15,5), colors=['
     plt.show()
 
 
-# In[8]:
+# In[9]:
 
 
-def plot_call_types_distribution(calls_type_distr, figsize=(8,4)):
+def plot_call_types_distribution(client_ds, figsize=(8,4)):
     plt.figure(figsize=figsize)
     s = client_ds.groupby('call_type')['id'].count()/len(client_ds)
     s = s.reindex(calls_type_distr['type'])
@@ -155,7 +169,7 @@ def plot_call_types_distribution(calls_type_distr, figsize=(8,4)):
     plt.show()
 
 
-# In[9]:
+# In[10]:
 
 
 def plot_connection_duration_distr(client_ds, figsize=(15,15)):
@@ -193,9 +207,94 @@ def plot_connection_duration_distr(client_ds, figsize=(15,15)):
     plt.show()
 
 
+# In[11]:
+
+
+def plot_clients_success(client_ds, figsize=(15,5)):
+    cds = client_ds[['type']].rename(columns={'type':'client_type'})
+    cds['success'] = client_ds['status'].isin(['drop_success','connected'])
+    cds['hour'] = [x.hour if x else None for x in client_ds['call_start_time_dt']]
+    cds = cds.pivot_table(index='client_type', columns='hour', values='success', aggfunc='mean').reindex(['gold','silver','regular'])
+    plt.figure(figsize=figsize)
+    sns.heatmap(cds, vmin=0, vmax=1, cmap='Greens', square=True, annot=True, fmt='.2%')
+    plt.title('Successed clients')
+    plt.show()
+
+
+# In[12]:
+
+
+def plot_clients_no_lines(client_ds, figsize=(15,5)):
+    cds = client_ds[['type']].rename(columns={'type':'client_type'})
+    cds['client_type'] = cds['client_type'].transform(lambda x:'vip' if x != 'regular' else x)
+    cds['no_lines'] = client_ds['status']=='no_lines'
+    cds['hour'] = [x.hour if x else None for x in client_ds['call_start_time_dt']]
+    
+    plt.figure(figsize=figsize)
+    grid = plt.GridSpec(1, 4, wspace=0.4, hspace=0.3,)
+    plt.subplot(grid[:3])
+    sns.heatmap(cds.pivot_table(index='client_type', columns='hour', values='no_lines', aggfunc='mean').reindex(['vip','regular']),
+                vmin=0, vmax=1, cmap='Greens_r', square=True, center=0.02, annot=True, fmt='.2%', cbar=False)
+    plt.subplot(grid[3])
+    sns.heatmap(cds.groupby('client_type')['no_lines'].mean().to_frame().reindex(['vip','regular']),
+                vmin=0, vmax=1, cmap='Greens_r', square=True, center=0.02, annot=True, fmt='.2%')
+    plt.suptitle('Clients got no_lines')
+    plt.show()
+
+
+# In[13]:
+
+
+def plot_clients_waitings(client_ds, figsize=(15,5)):
+    cds = client_ds[['type', 'call_start_time_dt', 'queue_duration_time_dt']].rename(columns={'type':'client_type'}).dropna()
+    cds['hour'] = [x.hour if x else None for x in cds['call_start_time_dt']]
+    cds['duration'] = [x.seconds for x in cds['queue_duration_time_dt']]
+    cds['limit_time_wait'] = cds['client_type'].transform(lambda x: {'gold':90, 'silver':180, 'regular':900}[x])
+    cds['less_then_limit'] = cds['duration']<cds['limit_time_wait']
+    
+    plt.figure(figsize=figsize)
+    grid = plt.GridSpec(1, 4, wspace=0.4, hspace=0.3,)
+    plt.subplot(grid[:3])
+    sns.heatmap(cds.pivot_table(index='client_type', columns='hour', values='less_then_limit', aggfunc='mean').reindex(['gold','silver','regular']),
+                vmin=0, vmax=1, cmap='Greens', square=True, annot=True, fmt='.2%', cbar=False)
+    plt.subplot(grid[3])
+    sns.heatmap(cds.groupby('client_type')['less_then_limit'].mean().to_frame().reindex(['gold','silver','regular']),
+                vmin=0, vmax=1, cmap='Greens', square=True, annot=True, fmt='.2%')
+
+    plt.suptitle('Clients waiting less then limit')
+    plt.show()
+
+
+# In[14]:
+
+
+def get_simulation_stat(client_ds, op_ds):
+    gold_queue_waiting = (client_ds[client_ds['type']=='gold']['queue_duration_time_dt'].dropna()<dt.timedelta(seconds=90)).mean()
+    silver_queue_waiting = (client_ds[client_ds['type']=='silver']['queue_duration_time_dt'].dropna()<dt.timedelta(minutes=3)).mean()
+    regular_queue_waiting = (client_ds[client_ds['type']=='regular']['queue_duration_time_dt'].dropna()<dt.timedelta(minutes=15)).mean()
+
+    vip_no_lines = (client_ds[client_ds['type'].isin(['gold','silver'])]['status']=='no_lines').mean()
+    regular_no_lines = (client_ds[client_ds['type']=='regular']['status']=='no_lines').mean()
+    
+    op_ds['salary'] = op_ds['type'].transform(lambda x: {'regular': 400, 'silver':500, 'gold':600}[x])
+    op_ds['salary'] = op_ds['salary']*[x.seconds//3600 for x in op_ds['work_duration_dt']]
+    
+    cost = op_ds['salary'].sum() + max(n_lines-50,0)*2000
+    
+    sim_data = {
+        'n_lines':n_lines, 'n_vip_lines': n_vip_lines, 'cost':cost,
+        'vip_no_lines': vip_no_lines, 'regular_no_lines': regular_no_lines,
+        'gold_wait': gold_queue_waiting, 'silver_wait': silver_queue_waiting, 'regular_wait': regular_queue_waiting
+    }
+    sim_data = dict(sim_data,
+        **{k:v for v,k in zip(op_time_ds.values.flatten(), [f'{t}_{h}' for h,t in product(op_time_ds.index, op_time_ds.columns,)])},
+        )
+    return sim_data
+
+
 # # Data preparation
 
-# In[10]:
+# In[15]:
 
 
 cl_statuses = ['generated', 'ask_for_line', 'get_line', 'no_lines', 'blocked',
@@ -205,7 +304,7 @@ map_cl_status_code = {s:idx for idx,s in enumerate(cl_statuses)}
 map_code_cl_status = {v:k for k,v in map_cl_status_code.items()}
 
 
-# In[11]:
+# In[16]:
 
 
 cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_time','status', 'call_type',
@@ -215,23 +314,14 @@ cl_columns = ['id','priority','call_start_time','call_end_time','max_waiting_tim
 cl_columns_map = {k:idx for idx,k in enumerate(cl_columns)}
 
 
-# In[12]:
+# In[17]:
 
 
 op_columns = ['id', 'priority', 'efficiency', 'start_work_time', 'work_duration']
 op_columns_map = {k:idx for idx,k in enumerate(op_columns)}
-op_mx = np.empty([0,len(op_columns)], dtype=np.int)
-for i in range(10):
-    for p, swt in [(3, dt.timedelta(hours=7)),
-                   (3, dt.timedelta(hours=11)),
-                   (2, dt.timedelta(hours=7)),
-                   (2, dt.timedelta(hours=11)),
-                   (1, dt.timedelta(hours=7)),
-                   (1, dt.timedelta(hours=11))]:
-        id_, op_mx = add_operator_to_matrix(op_mx, p, swt)
 
 
-# In[13]:
+# In[18]:
 
 
 call_frequency_ds = pd.DataFrame()
@@ -245,7 +335,7 @@ call_frequency_ds = call_frequency_ds.reindex(columns=['gold_clients', 'silver_c
 call_frequency_ds
 
 
-# In[14]:
+# In[19]:
 
 
 calls_type_distr = pd.DataFrame([['info', 'Информация', 0.16, (1.2, 2.05, 3.75), (0.05, 0.1)],
@@ -257,9 +347,25 @@ calls_type_distr['extra_time'] = [[dt.timedelta(minutes=y).seconds for y in x] f
 calls_type_distr
 
 
-# # Testing model
+# In[20]:
 
-# In[15]:
+
+try:
+    simulation_ds = pd.read_csv('simulation_ds.csv', index_col=0)
+except:
+    simulation_ds = pd.DataFrame(columns=[
+    'n_lines', 'n_vip_lines', 'cost',
+    'gold_wait', 'silver_wait', 'regular_wait',
+    'vip_no_lines', 'regular_no_lines',
+    'gold_7', 'gold_8', 'gold_9', 'gold_10', 'gold_11',
+    'silver_7', 'silver_8', 'silver_9', 'silver_10', 'silver_11',
+    'regular_7', 'regular_8', 'regular_9', 'regular_10', 'regular_11',
+    ])
+
+
+# # Set model
+
+# In[21]:
 
 
 class Queue(sp.PriorityStore):
@@ -281,7 +387,7 @@ class Queue(sp.PriorityStore):
         return True
 
 
-# In[16]:
+# In[22]:
 
 
 class CallCenter(object):
@@ -374,7 +480,7 @@ class CallCenter(object):
         pass
 
 
-# In[17]:
+# In[23]:
 
 
 class Client(object):
@@ -486,7 +592,7 @@ class Client(object):
         return self.env.client_mx[self.id_, cl_columns_map[field]]
 
 
-# In[18]:
+# In[24]:
 
 
 class Operator(object):
@@ -525,7 +631,7 @@ class Operator(object):
         return self.env.op_mx[self.id_, op_columns_map[field]]
 
 
-# In[19]:
+# In[25]:
 
 
 def client_generator(env):
@@ -538,20 +644,39 @@ def client_generator(env):
         yield env.timeout(1)
 
 
-# In[20]:
+# In[26]:
 
 
 def init_env():
     env = sp.Environment()
     env.client_mx = np.empty([0,len(cl_columns)], dtype=np.int) #matrix to write clients data
-    env.op_mx = op_mx #matrix with operators data
-    env.call_center = CallCenter(env, n_lines=2, n_vip_lines=0) 
+    env.op_mx = set_op_mx(op_time_ds) #matrix with operators data
+    env.call_center = CallCenter(env, n_lines=n_lines, n_vip_lines=n_vip_lines) 
     env.client_generator = env.process(client_generator(env))
-    env.operators = [Operator(env, id_) for id_ in op_mx[:,op_columns_map['id']]]
+    env.operators = [Operator(env, id_) for id_ in env.op_mx[:,op_columns_map['id']]]
     return env
 
 
-# In[21]:
+# # Set simulation and run
+
+# In[27]:
+
+
+n_lines = 55
+n_vip_lines = 3
+
+
+# In[28]:
+
+
+op_time_ds = pd.DataFrame(index=range(7,12))
+op_time_ds['gold'] = [3, 4, 0, 0, 3]
+op_time_ds['silver'] = [5, 6, 0, 5, 4]
+op_time_ds['regular'] = [6, 10, 10, 7,6]
+op_time_ds
+
+
+# In[29]:
 
 
 env = init_env()
@@ -559,30 +684,59 @@ for i in tqdm_notebook(range(dt.timedelta(hours=12, minutes=0, seconds=0).second
     env.run(until=i+1)
 
 
-# In[22]:
+# In[30]:
 
 
 client_ds = get_client_ds(env)
-print(client_ds.shape)
-client_ds.head()
-
-
-# In[23]:
-
-
 op_ds = get_operator_ds(env)
-print(op_ds.shape)
-op_ds.head()
+
+sim_data = get_simulation_stat(client_ds, op_ds)
+simulation_ds = simulation_ds.append(sim_data, ignore_index=True)
+
+simulation_ds.to_csv('simulation_ds.csv')
 
 
-# In[24]:
+# In[31]:
 
 
-plot_call_types_distribution(calls_type_distr)
+plot_clients_no_lines(client_ds)
 
 
-# In[25]:
+# In[32]:
 
 
-plot_connection_duration_distr(client_ds)
+plot_clients_waitings(client_ds)
+
+
+# In[33]:
+
+
+plot_clients_success(client_ds)
+
+
+# # Find best parameters
+
+# In[34]:
+
+
+cds = simulation_ds.copy()
+
+
+# In[35]:
+
+
+cds = cds[(cds['gold_wait']>=0.98)&(cds['silver_wait']>=0.95)&(cds['regular_wait']>=0.85)
+   &(cds['regular_no_lines']<=0.2)&(cds['vip_no_lines']<=0.02)]
+
+
+# In[36]:
+
+
+cds.shape
+
+
+# In[37]:
+
+
+cds.sort_values('cost').iloc[0]
 
