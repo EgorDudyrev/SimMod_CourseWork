@@ -532,7 +532,10 @@ def init_env(op_time_ds, n_lines, n_vip_lines):
     env.operators = [Operator(env, id_) for id_ in env.op_mx[:,op_columns_map['id']]]
     return env
 
-def run_simulation(op_time_ds, n_lines, n_vip_lines, time_work=dt.timedelta(hours=12), verb=False):
+def run_simulation(op_time_ds, n_lines, n_vip_lines, time_work=dt.timedelta(hours=12), verb=False, only_stat=False):
+    if type(op_time_ds) == np.ndarray:
+        op_time_ds = pd.DataFrame(op_time_ds.reshape(5,3), index=range(7,12), columns=['gold','silver','regular'])
+    
     env = init_env(op_time_ds, n_lines, n_vip_lines)
     if verb:
         for i in tqdm_notebook(range(time_work.seconds)):
@@ -542,4 +545,6 @@ def run_simulation(op_time_ds, n_lines, n_vip_lines, time_work=dt.timedelta(hour
     
     client_ds, op_ds = get_client_ds(env), get_operator_ds(env)
     sim_data = get_simulation_stat(client_ds, op_ds, op_time_ds, n_lines, n_vip_lines)
+    if only_stat:
+        return sim_data
     return client_ds, op_ds, sim_data
