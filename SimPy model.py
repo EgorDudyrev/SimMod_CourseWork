@@ -37,7 +37,7 @@ try:
     simulation_ds = pd.read_csv('simulation_ds.csv', index_col=0)
 except:
     simulation_ds = pd.DataFrame(columns=[
-    'n_lines', 'n_vip_lines', 'cost',
+    'n_lines', 'n_vip_lines', 'cost', 'clever_wait',
     'gold_wait', 'silver_wait', 'regular_wait',
     'vip_no_lines', 'regular_no_lines',
     'gold_7', 'gold_8', 'gold_9', 'gold_10', 'gold_11',
@@ -52,7 +52,7 @@ except:
 
 
 n_lines = 55
-n_vip_lines = 3
+n_vip_lines = 5
 
 
 # In[5]:
@@ -74,23 +74,42 @@ client_ds, op_ds, sim_data = sm.run_simulation(op_time_ds, n_lines, n_vip_lines,
 # In[7]:
 
 
-simulation_ds = simulation_ds.append(sim_data, ignore_index=True)
-simulation_ds.to_csv('simulation_ds.csv')
+client_ds['queue_duration_time_sec'] = [x.seconds for x in client_ds['queue_duration_time_dt']]
 
 
 # In[8]:
 
 
-sm.plot_clients_no_lines(client_ds)
+wait_table = client_ds[['type', 'hour','queue_duration_time_sec']].dropna().pivot_table(
+    index='hour',columns='type', values='queue_duration_time_sec', aggfunc='mean').reindex(columns=['gold','silver','regular'])
 
 
 # In[9]:
 
 
-sm.plot_clients_waitings(client_ds)
+client_ds, op_ds, sim_data = sm.run_simulation(op_time_ds, n_lines, n_vip_lines, verb=True, wait_table=wait_table)
 
 
 # In[10]:
+
+
+simulation_ds = simulation_ds.append(sim_data, ignore_index=True)
+simulation_ds.to_csv('simulation_ds.csv')
+
+
+# In[11]:
+
+
+sm.plot_clients_no_lines(client_ds)
+
+
+# In[12]:
+
+
+sm.plot_clients_waitings(client_ds)
+
+
+# In[13]:
 
 
 sm.plot_clients_success(client_ds)
@@ -98,26 +117,26 @@ sm.plot_clients_success(client_ds)
 
 # # Find best parameters
 
-# In[11]:
+# In[14]:
 
 
 cds = simulation_ds.copy()
 
 
-# In[12]:
+# In[15]:
 
 
 cds = cds[(cds['gold_wait']>=0.98)&(cds['silver_wait']>=0.95)&(cds['regular_wait']>=0.85)
-   &(cds['regular_no_lines']<=0.2)&(cds['vip_no_lines']<=0.02)]
+   &(cds['regular_no_lines']<=0.2)&(cds['vip_no_lines']<=0.02)&(cds['clever_wait']==True)]
 
 
-# In[13]:
+# In[16]:
 
 
 cds.shape
 
 
-# In[14]:
+# In[17]:
 
 
 cds.sort_values('cost').iloc[0]

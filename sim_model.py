@@ -237,13 +237,15 @@ def plot_clients_waitings(client_ds, figsize=(15,5)):
     plt.suptitle('Clients waiting less then limit')
     plt.show()
 
-def get_simulation_stat(client_ds, op_ds, op_time_ds, n_lines, n_vip_lines):
+def get_simulation_stat(client_ds, op_ds, op_time_ds, n_lines, n_vip_lines, wait_table):
     gold_queue_waiting = (client_ds[client_ds['type']=='gold']['queue_duration_time_dt'].dropna()<dt.timedelta(seconds=90)).mean()
     silver_queue_waiting = (client_ds[client_ds['type']=='silver']['queue_duration_time_dt'].dropna()<dt.timedelta(minutes=3)).mean()
     regular_queue_waiting = (client_ds[client_ds['type']=='regular']['queue_duration_time_dt'].dropna()<dt.timedelta(minutes=15)).mean()
 
     vip_no_lines = (client_ds[client_ds['type'].isin(['gold','silver'])]['status']=='no_lines').mean()
     regular_no_lines = (client_ds[client_ds['type']=='regular']['status']=='no_lines').mean()
+    
+    clever_wait = wait_table is not None
     
     op_ds['salary'] = op_ds['type'].transform(lambda x: {'regular': 400, 'silver':500, 'gold':600}[x])
     op_ds['salary'] = op_ds['salary']*[x.seconds//3600 for x in op_ds['work_duration_dt']]
@@ -253,7 +255,8 @@ def get_simulation_stat(client_ds, op_ds, op_time_ds, n_lines, n_vip_lines):
     sim_data = {
         'n_lines':n_lines, 'n_vip_lines': n_vip_lines, 'cost':cost,
         'vip_no_lines': vip_no_lines, 'regular_no_lines': regular_no_lines,
-        'gold_wait': gold_queue_waiting, 'silver_wait': silver_queue_waiting, 'regular_wait': regular_queue_waiting
+        'gold_wait': gold_queue_waiting, 'silver_wait': silver_queue_waiting, 'regular_wait': regular_queue_waiting,
+        'clever_wait': clever_wait,
     }
     sim_data = dict(sim_data,
         **{k:v for v,k in zip(op_time_ds.values.flatten(), [f'{t}_{h}' for h,t in product(op_time_ds.index, op_time_ds.columns,)])},
@@ -303,6 +306,9 @@ class CallCenter(object):
             client.set_status('get_line')
         else:
             raise self.NoLinesAvailable()
+        if cl_priority != 3:
+            enter_card_time = int(round(np.random.uniform(7,16),0))
+            yield self.env.timeout(enter_card_time)
         yield self.env.process(self.put_to_queue(client))
     
     def release_line(self, client):
@@ -316,16 +322,13 @@ class CallCenter(object):
     def put_to_queue(self, client):
         cl_id = client.id_
         cl_priority = client.get_mx_field('priority')
-        if cl_priority == 3:
-            yield self.queue.put(sp.PriorityItem(cl_priority, client))
-            client.put_in_queue.succeed()
-            yield self.env.timeout(1)
-            # If client is still in queue, estimate its waiting time
-            if client in [x.item for x in self.queue.items]:
-                yield self.queue.get(lambda x: x.item.id_==client.id_)
-                client.waiting_queue.interrupt()
-                self.env.process(self.block_client(client))
-        else:
+        yield self.queue.put(sp.PriorityItem(cl_priority, client))
+        client.put_in_queue.succeed()
+        yield self.env.timeout(1)
+        # If client is still in queue, estimate its waiting time
+        if client in [x.item for x in self.queue.items]:
+            yield self.queue.get(lambda x: x.item.id_==client.id_)
+            client.waiting_queue.interrupt()
             self.env.process(self.block_client(client))
             
     def request_client(self, operator):
@@ -346,11 +349,7 @@ class CallCenter(object):
         """
         client.block.succeed()
         cl_priority = client.get_mx_field('priority')
-        if cl_priority == 3:
-            block_time = 7
-        else:
-            block_time = int(round(np.random.uniform(7,16),0))
-        yield self.env.timeout(block_time)
+        yield self.env.timeout(7)
         ttw = self.estimate_wait_time(client)
         dropped = yield self.env.process(client.decide_to_drop_unblock(time_to_wait=ttw))
         if not dropped:
@@ -361,7 +360,12 @@ class CallCenter(object):
         """
         Function to estimate how much time client will wait in queue
         """
-        return 0  # For testing purposes only
+        if self.env.wait_table is not None:
+            cl_priority = client.get_mx_field('priority')
+            ttw = self.env.wait_table.iat[self.env.now//3600, cl_priority-1]
+        else:
+            ttw = 0
+        return ttw
     
     class NoLinesAvailable(sp.exceptions.SimPyException):
         """
@@ -523,8 +527,9 @@ def client_generator(env):
                 client = Client(env, id_)
         yield env.timeout(1)
 
-def init_env(op_time_ds, n_lines, n_vip_lines):
+def init_env(op_time_ds, n_lines, n_vip_lines, wait_table):
     env = sp.Environment()
+    env.wait_table = wait_table
     env.client_mx = np.empty([0,len(cl_columns)], dtype=np.int) #matrix to write clients data
     env.op_mx = set_op_mx(op_time_ds) #matrix with operators data
     env.call_center = CallCenter(env, n_lines=n_lines, n_vip_lines=n_vip_lines) 
@@ -532,11 +537,11 @@ def init_env(op_time_ds, n_lines, n_vip_lines):
     env.operators = [Operator(env, id_) for id_ in env.op_mx[:,op_columns_map['id']]]
     return env
 
-def run_simulation(op_time_ds, n_lines, n_vip_lines, time_work=dt.timedelta(hours=12), verb=False, only_stat=False):
+def run_simulation(op_time_ds, n_lines, n_vip_lines, time_work=dt.timedelta(hours=12), verb=False, only_stat=False, wait_table=None):
     if type(op_time_ds) == np.ndarray:
         op_time_ds = pd.DataFrame(op_time_ds.reshape(5,3), index=range(7,12), columns=['gold','silver','regular'])
     
-    env = init_env(op_time_ds, n_lines, n_vip_lines)
+    env = init_env(op_time_ds, n_lines, n_vip_lines, wait_table)
     if verb:
         for i in tqdm_notebook(range(time_work.seconds)):
             env.run(until=i+1)
@@ -544,7 +549,7 @@ def run_simulation(op_time_ds, n_lines, n_vip_lines, time_work=dt.timedelta(hour
         env.run(time_work.seconds)
     
     client_ds, op_ds = get_client_ds(env), get_operator_ds(env)
-    sim_data = get_simulation_stat(client_ds, op_ds, op_time_ds, n_lines, n_vip_lines)
+    sim_data = get_simulation_stat(client_ds, op_ds, op_time_ds, n_lines, n_vip_lines, wait_table)
     if only_stat:
         return sim_data
     return client_ds, op_ds, sim_data
